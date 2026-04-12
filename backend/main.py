@@ -1180,10 +1180,12 @@ def reporte_ganancias(
     for dev in devs:
         pid = dev.producto_id
         if pid in detalle:
-            # Costo proporcional de lo devuelto
-            costo_unit_dev = detalle[pid]["costo"] / detalle[pid]["cantidad"] if detalle[pid]["cantidad"] else 0
+            # Costo unitario promedio ANTES de descontar cantidad
+            cant = detalle[pid]["cantidad"]
+            costo_unit_dev = detalle[pid]["costo"] / cant if cant > 0 else 0
             detalle[pid]["ingresos"] -= dev.monto
             detalle[pid]["costo"]    -= costo_unit_dev * dev.cantidad
+            detalle[pid]["cantidad"] -= dev.cantidad   # ← descuentar cantidad devuelta
             detalle[pid]["devuelto"] += dev.monto
 
     # Totales
