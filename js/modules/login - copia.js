@@ -106,16 +106,11 @@ function seleccionarCajero(id) {
 // ── Validación del botón ──────────────────────────────────────────────────────
 
 function _checkBtn() {
-  const btn        = document.getElementById('login-btn');
-  const fondo      = document.getElementById('login-fondo');
-  const fondoError = document.getElementById('login-fondo-error');
+  const btn   = document.getElementById('login-btn');
+  const fondo = document.getElementById('login-fondo');
   if (!btn) return;
   const listo = _state.tiendaSel && _state.cajeroSel && (fondo?.value ?? '') !== '';
   btn.disabled = !listo;
-  // Mostrar leyenda si cajero seleccionado y fondo vacío
-  if (fondoError) {
-    fondoError.style.display = (_state.cajeroSel && !(fondo?.value ?? '')) ? '' : 'none';
-  }
 }
 
 // ── Entrar ────────────────────────────────────────────────────────────────────

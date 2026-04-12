@@ -183,6 +183,18 @@ class Merma(Base):
     fecha       = Column(DateTime, default=datetime.now)
 
 
+class Gasto(Base):
+    __tablename__ = "gastos"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    monto       = Column(Float, nullable=False)
+    descripcion = Column(Text, nullable=False)
+    categoria   = Column(String(50), default="Otro")  # Compra proveedor / Servicio / Otro
+    cajero      = Column(String(100), default="")
+    tienda_id   = Column(Integer, ForeignKey("tiendas.id"), nullable=True)
+    fecha       = Column(DateTime, default=datetime.now)
+
+
 class CierreCaja(Base):
     __tablename__ = "cierres_caja"
 
@@ -237,6 +249,15 @@ def _migrar_columnas_nuevas():
         )""",
         "ALTER TABLE items_venta ADD COLUMN lote_id INTEGER",
         "ALTER TABLE items_venta ADD COLUMN costo_unit REAL DEFAULT 0.0",
+        """CREATE TABLE IF NOT EXISTS gastos (
+            id INTEGER PRIMARY KEY,
+            monto REAL NOT NULL,
+            descripcion TEXT NOT NULL,
+            categoria VARCHAR(50) DEFAULT 'Otro',
+            cajero VARCHAR(100) DEFAULT '',
+            tienda_id INTEGER,
+            fecha DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
     ]
     with engine.connect() as conn:
         for sql in columnas:

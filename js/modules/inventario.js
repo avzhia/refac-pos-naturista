@@ -218,6 +218,11 @@ function _renderFilaProd(p) {
   const pct    = st > 0 ? Math.min(100, Math.round(st / Math.max(st, (p.stock_min||5) * 3) * 100)) : 0;
   const fillC  = st <= (p.stock_min||5) ? '#F5C84A' : 'var(--g3)';
   const lotesNodev = (p.lotes||[]).filter(l => l.numero_lote !== 'DEV');
+  const lotesOrdenados = [
+    ...(p.lotes||[]).filter(l => l.numero_lote !== 'DEV' && l.caduca && l.fecha_caducidad).sort((a,b) => new Date(a.fecha_caducidad)-new Date(b.fecha_caducidad)),
+    ...(p.lotes||[]).filter(l => l.numero_lote !== 'DEV' && (!l.caduca || !l.fecha_caducidad)),
+    ...(p.lotes||[]).filter(l => l.numero_lote === 'DEV' && l.stock > 0),
+  ];
 
   return `
     <div class="inv-prod-row" id="inv-row-${p.id}">
@@ -245,8 +250,8 @@ function _renderFilaProd(p) {
       </div>
       <div class="lotes-panel" id="lotes-${p.id}">
         <div class="lotes-title">Lotes (${lotesNodev.length})</div>
-        ${lotesNodev.length
-          ? lotesNodev.map(l => _renderFilaLote(l, p.id)).join('')
+        ${lotesOrdenados.length
+          ? lotesOrdenados.map(l => _renderFilaLote(l, p.id)).join('')
           : '<div style="font-size:12px;color:var(--txt3);">Sin lotes registrados.</div>'}
         <button class="btn-add-lote" data-action="add-lote" data-id="${p.id}">+ Agregar lote</button>
       </div>
@@ -255,6 +260,7 @@ function _renderFilaProd(p) {
 }
 
 function _renderFilaLote(l, prodId) {
+  const isDev = l.numero_lote === 'DEV';
   const dias = l.caduca && l.fecha_caducidad ? diasHastaCaducidad(l.fecha_caducidad) : null;
   let cadCls = 'cad-ok', cadTxt = l.caduca ? (l.fecha_caducidad || '—') : 'No caduca';
   if (dias !== null) {
@@ -264,7 +270,7 @@ function _renderFilaLote(l, prodId) {
   const prov = l.proveedor_nombre || '—';
   return `
     <div class="lote-row">
-      <span style="font-weight:500;">${l.numero_lote}</span>
+      <span style="font-weight:500;color:${isDev?'var(--amber-txt)':'var(--txt2)'};font-size:12px;">${isDev?'↩ DEV':l.numero_lote}</span>
       <span class="cad-badge ${cadCls}">${cadTxt}</span>
       <span style="font-weight:500;">${l.stock} uds</span>
       <span style="color:var(--txt3);">Costo: ${mxPesos(l.costo_unitario)} · ${prov}</span>
