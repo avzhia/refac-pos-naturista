@@ -257,14 +257,9 @@ function _onTipoChange() {
   const pagoSection  = document.querySelector('.form-row:has(input[name="dev-pago-regreso"])');
 
   if (cambioSec) cambioSec.style.display = tipo === 'cambio' ? '' : 'none';
-  if (tipo === 'cambio') {
-    // N/A es la opción por defecto para cambio
-    const naOpt = document.querySelector('input[name="dev-pago-regreso"][value="N/A"]');
-    if (naOpt) naOpt.checked = true;
-  } else {
-    const efOpt = document.querySelector('input[name="dev-pago-regreso"][value="Efectivo"]');
-    if (efOpt) efOpt.checked = true;
-  }
+  // Siempre seleccionar Efectivo por defecto al cambiar tipo
+  const efOpt = document.querySelector('input[name="dev-pago-regreso"][value="Efectivo"]');
+  if (efOpt) efOpt.checked = true;
   _renderResumen();
 }
 
@@ -396,7 +391,7 @@ async function confirmar() {
         cliente_id: _s.ventaSel.cliente_id || 1,
         tienda_id:  tiendaId,
         cajero,
-        forma_pago: pagoReg === 'N/A' ? 'Efectivo' : pagoReg,
+        forma_pago: pagoReg,
         total:      _s.prodCambioSel.precio,
         notas:      `Cambio por devolución ticket #${_s.ventaSel.id}`,
         items: [{
