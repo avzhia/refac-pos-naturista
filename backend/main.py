@@ -721,6 +721,24 @@ def eliminar_cliente(cliente_id: int, db: Session = Depends(get_db)):
     return {"ok": True, "tenia_compras": num_compras > 0, "num_compras": num_compras}
 
 
+@app.get("/api/clientes/{cliente_id}/ventas")
+def get_ventas_cliente(cliente_id: int, db: Session = Depends(get_db)):
+    ventas = db.query(Venta).filter(
+        Venta.cliente_id == cliente_id
+    ).order_by(Venta.fecha.desc()).limit(50).all()
+    result = []
+    for v in ventas:
+        items = db.query(ItemVenta).filter(ItemVenta.venta_id == v.id).all()
+        result.append({
+            "id":         v.id,
+            "fecha":      v.fecha.isoformat() if v.fecha else "",
+            "total":      v.total,
+            "forma_pago": v.forma_pago,
+            "items":      [{"nombre": i.nombre_prod, "cantidad": i.cantidad, "precio": i.precio_unit} for i in items],
+        })
+    return result
+
+
 # ══════════════════════════════════════
 #  VENTAS
 # ══════════════════════════════════════

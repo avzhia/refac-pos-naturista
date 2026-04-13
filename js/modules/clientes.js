@@ -120,7 +120,7 @@ function _renderCard(c) {
       <div class="cl-info-grid">
         <div><div class="ci-lbl">Teléfono</div><div class="ci-val">${c.telefono||'—'}</div></div>
         <div><div class="ci-lbl">Email</div><div class="ci-val" style="overflow:hidden;text-overflow:ellipsis;">${c.email||'—'}</div></div>
-        <div><div class="ci-lbl">Cumpleaños</div><div class="ci-val">${c.fecha_cumple||'—'}</div></div>
+        <div><div class="ci-lbl">Cumpleaños</div><div class="ci-val">${c.fecha_cumple ? c.fecha_cumple.substring(5).replace('-','/') : '—'}</div></div>
         <div><div class="ci-lbl">Compras</div><div class="ci-val">${c.total_compras||0}</div></div>
       </div>
       ${c.notas ? `<div class="cl-notas">${c.notas}</div>` : ''}
@@ -182,7 +182,7 @@ async function abrirDetalle(id) {
         <div style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
           <div><span style="color:var(--txt3);">Total compras:</span> <strong>${c.total_compras||0}</strong></div>
           <div><span style="color:var(--txt3);">Total gastado:</span> <strong>${mxPesos(c.total_gastado||0)}</strong></div>
-          <div><span style="color:var(--txt3);">Cumpleaños:</span> ${c.fecha_cumple||'—'}</div>
+          <div><span style="color:var(--txt3);">Cumpleaños:</span> ${c.fecha_cumple ? c.fecha_cumple.substring(5).replace('-','/') : '—'}</div>
           <div><span style="color:var(--txt3);">Cliente desde:</span> ${c.cliente_desde||'—'}</div>
         </div>
         ${c.notas ? `<div class="cl-notas" style="margin-bottom:12px;">${c.notas}</div>` : ''}
