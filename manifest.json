@@ -1,0 +1,22 @@
+{
+  "name": "TiendaNaturistaMX POS",
+  "short_name": "POS Móvil",
+  "description": "Punto de venta móvil TiendaNaturistaMX",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2D5016",
+  "theme_color": "#2D5016",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

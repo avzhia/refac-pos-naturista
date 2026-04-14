@@ -9,7 +9,7 @@ from datetime import date, datetime
 from pydantic import BaseModel
 import os
 
-from database import crear_tablas, get_db, insertar_datos_iniciales
+from database import crear_tablas, get_db, insertar_datos_iniciales, Gasto
 from backup_db import hacer_respaldo
 from database import (Producto, Lote, Cliente, Venta, ItemVenta,
                       CierreCaja, Tienda, Cajero, Categoria, Devolucion, Merma, Config, Proveedor)
@@ -196,6 +196,19 @@ class CajeroConPin(BaseModel):
 
 class CajeroPinUpdate(BaseModel):
     pin: str
+
+
+class GastoIn(BaseModel):
+    monto:       float
+    descripcion: str
+    categoria:   str = "Otro"
+    cajero:      str = ""
+    tienda_id:   Optional[int] = None
+
+class GastoOut(GastoIn):
+    id:    int
+    fecha: str = ""
+    class Config: from_attributes = True
 
 @app.get("/api/admin/setup-required")
 def setup_required(db: Session = Depends(get_db)):
@@ -708,6 +721,24 @@ def eliminar_cliente(cliente_id: int, db: Session = Depends(get_db)):
     return {"ok": True, "tenia_compras": num_compras > 0, "num_compras": num_compras}
 
 
+@app.get("/api/clientes/{cliente_id}/ventas")
+def get_ventas_cliente(cliente_id: int, db: Session = Depends(get_db)):
+    ventas = db.query(Venta).filter(
+        Venta.cliente_id == cliente_id
+    ).order_by(Venta.fecha.desc()).limit(50).all()
+    result = []
+    for v in ventas:
+        items = db.query(ItemVenta).filter(ItemVenta.venta_id == v.id).all()
+        result.append({
+            "id":         v.id,
+            "fecha":      v.fecha.isoformat() if v.fecha else "",
+            "total":      v.total,
+            "forma_pago": v.forma_pago,
+            "items":      [{"nombre": i.nombre_prod, "cantidad": i.cantidad, "precio": i.precio_unit} for i in items],
+        })
+    return result
+
+
 # ══════════════════════════════════════
 #  VENTAS
 # ══════════════════════════════════════
@@ -1107,6 +1138,54 @@ def registrar_cierre(data: CierreIn, db: Session = Depends(get_db)):
     db.refresh(cierre)
     return {"ok": True, "cierre_id": cierre.id}
 
+@app.post("/api/gastos", response_model=GastoOut)
+def crear_gasto(data: GastoIn, db: Session = Depends(get_db)):
+    g = Gasto(
+        monto=data.monto,
+        descripcion=data.descripcion,
+        categoria=data.categoria,
+        cajero=data.cajero,
+        tienda_id=data.tienda_id,
+    )
+    db.add(g)
+    db.commit()
+    db.refresh(g)
+    return {**g.__dict__, "fecha": g.fecha.isoformat() if g.fecha else ""}
+
+@app.get("/api/gastos")
+def listar_gastos(
+    desde:     Optional[str] = None,
+    hasta:     Optional[str] = None,
+    tienda_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    q = db.query(Gasto)
+    if desde:
+        q = q.filter(func.date(Gasto.fecha) >= desde)
+    if hasta:
+        q = q.filter(func.date(Gasto.fecha) <= hasta)
+    if tienda_id:
+        q = q.filter(Gasto.tienda_id == tienda_id)
+    gastos = q.order_by(Gasto.fecha.desc()).all()
+    return [{
+        "id":          g.id,
+        "monto":       g.monto,
+        "descripcion": g.descripcion,
+        "categoria":   g.categoria,
+        "cajero":      g.cajero,
+        "tienda_id":   g.tienda_id,
+        "fecha":       g.fecha.isoformat() if g.fecha else "",
+    } for g in gastos]
+
+@app.delete("/api/gastos/{gasto_id}")
+def eliminar_gasto(gasto_id: int, db: Session = Depends(get_db)):
+    g = db.query(Gasto).filter(Gasto.id == gasto_id).first()
+    if not g:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    db.delete(g)
+    db.commit()
+    return {"ok": True}
+
 @app.get("/api/cierres")
 def listar_cierres(tienda_id: Optional[int] = None, db: Session = Depends(get_db)):
     q = db.query(CierreCaja)
@@ -1180,10 +1259,12 @@ def reporte_ganancias(
     for dev in devs:
         pid = dev.producto_id
         if pid in detalle:
-            # Costo proporcional de lo devuelto
-            costo_unit_dev = detalle[pid]["costo"] / detalle[pid]["cantidad"] if detalle[pid]["cantidad"] else 0
+            # Costo unitario promedio ANTES de descontar cantidad
+            cant = detalle[pid]["cantidad"]
+            costo_unit_dev = detalle[pid]["costo"] / cant if cant > 0 else 0
             detalle[pid]["ingresos"] -= dev.monto
             detalle[pid]["costo"]    -= costo_unit_dev * dev.cantidad
+            detalle[pid]["cantidad"] -= dev.cantidad   # ← descuentar cantidad devuelta
             detalle[pid]["devuelto"] += dev.monto
 
     # Totales

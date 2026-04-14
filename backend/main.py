@@ -41,6 +41,18 @@ app.mount("/js",  StaticFiles(directory="../js"),  name="js")
 def raiz():
     return FileResponse("../index.html")
 
+@app.get("/mobile")
+def mobile():
+    return FileResponse("../mobile.html")
+
+@app.get("/manifest.json")
+def manifest():
+    return FileResponse("../manifest.json", media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def service_worker():
+    return FileResponse("../sw.js", media_type="application/javascript")
+
 @app.get("/favicon.ico")
 def favicon():
     import os
