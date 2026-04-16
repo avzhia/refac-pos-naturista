@@ -58,7 +58,7 @@ function setPanel(id, el) {
   if (id === 'devoluciones') { _initDevRep(); return; }
   if (id === 'ganancias')    { initGanancias(); return; }
   if (id === 'productos')    { _cargarDatosProductos(); }
-  if (id === 'gastos')       { _conectarGastos(); gastoPreset('mes', document.querySelector('#rep-gastos .preset-btn.act') || document.querySelector('#rep-gastos .preset-btn')); }
+  if (id === 'gastos')       { _conectarGastos(); gastoPreset('hoy', document.querySelector('#rep-gastos .preset-btn[data-gasto-preset="hoy"]') || document.querySelector('#rep-gastos .preset-btn')); }
 }
 
 // ── PANEL HOY ─────────────────────────────────────────────────────────────────
@@ -343,8 +343,8 @@ function _filtrarProdTabla() {
 // ── PANEL MERMAS ──────────────────────────────────────────────────────────────
 
 function _initMermas() {
-  const btn = document.querySelector('#rep-mermas .preset-btn');
-  mermaPreset('mes', btn);
+  const btn = document.querySelector('#rep-mermas .preset-btn[data-merma-preset="hoy"]') || document.querySelector('#rep-mermas .preset-btn');
+  mermaPreset('hoy', btn);
 }
 
 function mermaPreset(tipo, el) {
@@ -405,8 +405,8 @@ function exportarMermas() {
 // ── PANEL DEVOLUCIONES ────────────────────────────────────────────────────────
 
 function _initDevRep() {
-  const btn = document.querySelector('#rep-devoluciones .preset-btn');
-  devPreset('mes', btn);
+  const btn = document.querySelector('#rep-devoluciones .preset-btn[data-dev-preset="hoy"]') || document.querySelector('#rep-devoluciones .preset-btn');
+  devPreset('hoy', btn);
 }
 
 function devPreset(tipo, el) {

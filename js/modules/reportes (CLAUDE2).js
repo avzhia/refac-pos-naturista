@@ -5,7 +5,7 @@
 
 import API    from '../core/api.js';
 import Estado from '../core/estado.js';
-import { showNotif, mxPesos, fechaHoyLocal, fechaLocal, cerrarSesion } from '../core/app.js';
+import { showNotif, confirmar, mxPesos, fechaHoyLocal, fechaLocal, cerrarSesion } from '../core/app.js';
 
 // ── Estado interno ────────────────────────────────────────────────────────────
 
@@ -19,6 +19,7 @@ let _devRepData  = [];
 let _mermasData  = [];
 let _cierreData  = null;
 let _ganProds    = [];
+let _gastosData  = [];
 
 // Exponer manejadores de conteo para los onclick generados dinámicamente
 window._repCambiarConteo = (d, delta) => _cambiarConteo(d, delta);
@@ -57,6 +58,7 @@ function setPanel(id, el) {
   if (id === 'devoluciones') { _initDevRep(); return; }
   if (id === 'ganancias')    { initGanancias(); return; }
   if (id === 'productos')    { _cargarDatosProductos(); }
+  if (id === 'gastos')       { _conectarGastos(); gastoPreset('mes', document.querySelector('#rep-gastos .preset-btn.act') || document.querySelector('#rep-gastos .preset-btn')); }
 }
 
 // ── PANEL HOY ─────────────────────────────────────────────────────────────────
@@ -449,14 +451,17 @@ async function cargarDevRep() {
           `<div class="bar-row"><span class="bar-lbl">${p.nombre}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.veces/maxV*100)}%;background:${gcols[Math.min(i,4)]}"></div></div><span class="bar-val">${p.veces}x · ${mxPesos(p.monto)}</span></div>`).join('')
       : '<div style="font-size:12px;color:var(--txt3);padding:12px 0;text-align:center;">Sin devoluciones en el periodo</div>';
 
-    const porMotivo={};
-    devs.forEach(d=>{ const m=d.motivo||'Sin motivo'; porMotivo[m]=(porMotivo[m]||0)+1; });
-    const motivos=Object.entries(porMotivo).sort((a,b)=>b[1]-a[1]);
-    const maxM=motivos.length?motivos[0][1]:1;
+    // Distribución por destino (inventario vs merma)
+    const porDestino = { 'Inventario': 0, 'Merma': 0 };
+    devs.forEach(d => {
+      if (d.regresar_inventario !== false) porDestino['Inventario']++;
+      else porDestino['Merma']++;
+    });
+    const maxD = Math.max(...Object.values(porDestino), 1);
     const pmEl = document.getElementById('devr-por-motivo');
-    if (pmEl) pmEl.innerHTML = motivos.length
-      ? motivos.slice(0,6).map(([m,n],i)=>
-          `<div class="bar-row"><span class="bar-lbl" style="font-size:11px;">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxM*100)}%;background:var(--g4)"></div></div><span class="bar-val">${n}</span></div>`).join('')
+    if (pmEl) pmEl.innerHTML = devs.length
+      ? Object.entries(porDestino).map(([label, n]) =>
+          `<div class="bar-row"><span class="bar-lbl" style="font-size:11px;">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxD*100)}%;background:var(--g4)"></div></div><span class="bar-val">${n}</span></div>`).join('')
       : '<div style="font-size:12px;color:var(--txt3);padding:12px 0;text-align:center;">Sin datos</div>';
 
     const tbody = document.getElementById('devr-tabla');
@@ -469,7 +474,7 @@ async function cargarDevRep() {
             <td style="font-weight:500">${d.nombre_prod}</td>
             <td style="color:var(--red-txt);font-weight:500">${d.cantidad}</td>
             <td style="color:var(--red-txt);font-weight:500">${mxPesos(d.monto)}</td>
-            <td style="font-size:12px">${d.motivo||'—'}</td>
+            <td style="font-size:12px">${d.regresar_inventario !== false ? 'Inventario' : 'Merma'}</td>
             <td style="font-size:12px">${d.forma_pago_regreso||'Efectivo'}</td>
             <td style="color:var(--txt3)">${d.cajero||'—'}</td>
           </tr>`;
@@ -480,11 +485,11 @@ async function cargarDevRep() {
 
 function exportarDevRep() {
   if (!_devRepData?.length) { showNotif('Sin datos para exportar'); return; }
-  const filas=[['Fecha','Hora','Ticket orig.','Producto','Cantidad','Monto','Motivo','Reintegro','Cajero']];
+  const filas=[['Fecha','Hora','Ticket orig.','Producto','Cantidad','Monto','Destino','Reintegro','Cajero']];
   _devRepData.forEach(d=>{
     const fecha=new Date(d.fecha);
     filas.push([fecha.toLocaleDateString('es-MX'),fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
-      `#${d.venta_id}`,d.nombre_prod,d.cantidad,d.monto.toFixed(2),d.motivo||'—',d.forma_pago_regreso||'Efectivo',d.cajero||'—']);
+      `#${d.venta_id}`,d.nombre_prod,d.cantidad,d.monto.toFixed(2),d.regresar_inventario !== false ? 'Inventario' : 'Merma',d.forma_pago_regreso||'Efectivo',d.cajero||'—']);
   });
   const desde=document.getElementById('dev-rep-desde')?.value;
   const hasta=document.getElementById('dev-rep-hasta')?.value;
@@ -538,8 +543,20 @@ async function _renderConteo() {
     _set('cierre-dev-total',      totalDev>0?`- ${mxPesos(totalDev)}`:'$0.00');
     _set('cierre-ventas-netas',   mxPesos(ventasNetas));
     _set('cierre-fondo2',         mxPesos(fondo));
-    _set('cierre-total-esperado', mxPesos(efSistema+fondo));
-    _set('cierre-ef-sistema',     mxPesos(efSistema));
+    // Gastos del turno
+    let totalGastos = 0;
+    try {
+      const hoyGastos = await API.get(`/api/gastos?desde=${hoy}&hasta=${hoy}${tid?'&tienda_id='+tid:''}`);
+      totalGastos = hoyGastos
+        .filter(g => new Date(g.fecha) >= apertura)
+        .reduce((s, g) => s + g.monto, 0);
+      _set('cierre-gastos-total', totalGastos > 0 ? `- ${mxPesos(totalGastos)}` : '$0.00');
+      _set('cierre-total-esperado', mxPesos(efSistema + fondo - totalGastos));
+    } catch(e) {
+      _set('cierre-gastos-total', '$0.00');
+      _set('cierre-total-esperado', mxPesos(efSistema+fondo));
+    }
+    _set('cierre-ef-sistema',     mxPesos(efSistema - totalGastos));
     _set('cierre-pago-ef',        mxPesos(efSistema));
     _set('cierre-pago-tj',        mxPesos(tjSistema));
     _set('cierre-pago-tr',        mxPesos(trSistema));
@@ -555,9 +572,9 @@ async function _renderConteo() {
 
     _cierreData = { ventas, devs, efBruto, tjBruto, trBruto,
       efDev, tjDev, trDev, efSistema, tjSistema, trSistema,
-      ventasBrutas, totalDev, ventasNetas };
+      ventasBrutas, totalDev, ventasNetas, totalGastos };
 
-    setTimeout(()=>_calcConteo(efSistema+fondo), 100);
+    setTimeout(()=>_calcConteo(efSistema + fondo - totalGastos), 100);
   } catch(e) {
     console.error('[reportes] Error cierre:', e);
     _set('cierre-tickets','Error al cargar');
@@ -594,7 +611,8 @@ function _cambiarConteo(d, delta) {
   if (inp) inp.value = _conteo[d];
   const sub = document.getElementById(`rep-sub-${d}`);
   if (sub) sub.textContent = '$'+(d*_conteo[d]).toLocaleString('es-MX');
-  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0);
+  const gastos = (_cierreData?.totalGastos)||0;
+  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0) - gastos;
   _calcConteo(ef);
 }
 
@@ -602,7 +620,8 @@ function _updateConteo(d, v) {
   _conteo[d] = parseInt(v)||0;
   const sub = document.getElementById(`rep-sub-${d}`);
   if (sub) sub.textContent = '$'+(d*_conteo[d]).toLocaleString('es-MX');
-  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0);
+  const gastos = (_cierreData?.totalGastos)||0;
+  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0) - gastos;
   _calcConteo(ef);
 }
 
@@ -801,6 +820,102 @@ function _descargarCSV(filas, nombre) {
   URL.revokeObjectURL(url);
 }
 
+// ── PANEL GASTOS ─────────────────────────────────────────────────────────────
+
+let _gastosConectado = false;
+
+function _conectarGastos() {
+  if (_gastosConectado) return;
+  _gastosConectado = true;
+  document.getElementById('gasto-desde')?.addEventListener('change', cargarGastos);
+  document.getElementById('gasto-hasta')?.addEventListener('change', cargarGastos);
+}
+
+function gastoPreset(tipo, el) {
+  document.querySelectorAll('#rep-gastos .preset-btn').forEach(b => b.classList.remove('act'));
+  if (el) el.classList.add('act');
+  const { desde, hasta } = _calcPreset(tipo);
+  const dEl = document.getElementById('gasto-desde'); if (dEl) dEl.value = desde;
+  const hEl = document.getElementById('gasto-hasta'); if (hEl) hEl.value = hasta;
+  cargarGastos();
+}
+
+async function cargarGastos() {
+  const desde = document.getElementById('gasto-desde')?.value;
+  const hasta = document.getElementById('gasto-hasta')?.value;
+  if (!desde || !hasta) return;
+  const tid = Estado.config.tiendaId || '';
+  try {
+    const gastos = await API.get(`/api/gastos?desde=${desde}&hasta=${hasta}${tid ? '&tienda_id='+tid : ''}`);
+    _gastosData = gastos;
+    const total = gastos.reduce((s, g) => s + g.monto, 0);
+    _set('gasto-kpi-total', mxPesos(total));
+    _set('gasto-kpi-num',   gastos.length);
+    _set('gasto-kpi-prom',  gastos.length ? mxPesos(total / gastos.length) : '$0.00');
+    const tbody = document.getElementById('gasto-tabla');
+    if (tbody) tbody.innerHTML = gastos.length
+      ? gastos.map(g => {
+          const fecha = new Date(g.fecha);
+          return `<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:7px 6px;color:var(--txt3);white-space:nowrap;">${fecha.toLocaleDateString('es-MX')} ${fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</td>
+            <td style="padding:7px 6px;font-weight:500;">${g.descripcion}</td>
+            <td style="padding:7px 6px;color:var(--txt3);">${g.categoria}</td>
+            <td style="padding:7px 6px;color:var(--txt3);">${g.cajero || '—'}</td>
+            <td style="padding:7px 6px;text-align:right;font-weight:500;color:var(--red-txt);">${mxPesos(g.monto)}</td>
+            <td style="padding:7px 6px;text-align:center;">
+              <button data-eliminar-gasto="${g.id}"
+                style="border:none;background:var(--red-bg);color:var(--red-txt);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;">✕</button>
+            </td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:20px;">Sin gastos en el periodo seleccionado</td></tr>';
+  } catch(e) {
+    showNotif('⚠ Error al cargar gastos');
+    console.error('[gastos]', e);
+  }
+}
+
+function abrirModalGasto() {
+  const m = document.getElementById('modal-gasto');
+  if (!m) { showNotif('⚠ Modal de gasto no encontrado'); return; }
+  document.getElementById('gasto-f-monto').value = '';
+  document.getElementById('gasto-f-desc').value  = '';
+  document.getElementById('gasto-f-cat').value   = 'Otro';
+  m.classList.add('open');
+  setTimeout(() => document.getElementById('gasto-f-monto')?.focus(), 100);
+}
+
+async function guardarGasto() {
+  const monto = parseFloat(document.getElementById('gasto-f-monto')?.value || '0');
+  const desc  = document.getElementById('gasto-f-desc')?.value?.trim() || '';
+  const cat   = document.getElementById('gasto-f-cat')?.value || 'Otro';
+  if (!monto || monto <= 0) { showNotif('⚠ Ingresa un monto válido'); return; }
+  if (!desc)                 { showNotif('⚠ Ingresa una descripción'); return; }
+  try {
+    await API.post('/api/gastos', {
+      monto, descripcion: desc, categoria: cat,
+      cajero:    Estado.config.cajero   || '',
+      tienda_id: Estado.config.tiendaId || null,
+    });
+    document.getElementById('modal-gasto')?.classList.remove('open');
+    await cargarGastos();
+    showNotif('✓ Gasto registrado');
+  } catch(e) {
+    showNotif('⚠ Error al registrar gasto');
+    console.error('[guardarGasto]', e);
+  }
+}
+
+async function eliminarGasto(id) {
+  const ok = await confirmar('¿Eliminar este gasto?', 'Eliminar gasto');
+  if (!ok) return;
+  try {
+    await API.delete(`/api/gastos/${id}`);
+    await cargarGastos();
+    showNotif('✓ Gasto eliminado');
+  } catch(e) { showNotif('⚠ Error al eliminar gasto'); }
+}
+
 // ── CONECTAR EVENTOS ──────────────────────────────────────────────────────────
 
 function conectar() {
@@ -866,6 +981,20 @@ function conectar() {
   });
   document.getElementById('gan-prod-input')?.addEventListener('blur', () => {
     setTimeout(()=>{ const dd=document.getElementById('gan-prod-dd'); if(dd) dd.style.display='none'; },200);
+  });
+
+  // Delegación de eventos para gastos — funciona independiente de conectar()
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (t.id === 'gasto-nuevo-btn' || t.closest('#gasto-nuevo-btn')) {
+      abrirModalGasto(); return;
+    }
+    if (t.id === 'gasto-modal-save') { guardarGasto(); return; }
+    if (t.id === 'gasto-modal-cancel') {
+      document.getElementById('modal-gasto')?.classList.remove('open'); return;
+    }
+    if (t.dataset.gastoPreset) { gastoPreset(t.dataset.gastoPreset, t); return; }
+    if (t.dataset.eliminarGasto) { eliminarGasto(parseInt(t.dataset.eliminarGasto)); return; }
   });
 
   // Navegar a reportes
