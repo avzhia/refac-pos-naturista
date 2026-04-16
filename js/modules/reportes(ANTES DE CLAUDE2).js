@@ -451,17 +451,14 @@ async function cargarDevRep() {
           `<div class="bar-row"><span class="bar-lbl">${p.nombre}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(p.veces/maxV*100)}%;background:${gcols[Math.min(i,4)]}"></div></div><span class="bar-val">${p.veces}x · ${mxPesos(p.monto)}</span></div>`).join('')
       : '<div style="font-size:12px;color:var(--txt3);padding:12px 0;text-align:center;">Sin devoluciones en el periodo</div>';
 
-    // Distribución por destino (inventario vs merma)
-    const porDestino = { 'Inventario': 0, 'Merma': 0 };
-    devs.forEach(d => {
-      if (d.regresar_inventario !== false) porDestino['Inventario']++;
-      else porDestino['Merma']++;
-    });
-    const maxD = Math.max(...Object.values(porDestino), 1);
+    const porMotivo={};
+    devs.forEach(d=>{ const m=d.motivo||'Sin motivo'; porMotivo[m]=(porMotivo[m]||0)+1; });
+    const motivos=Object.entries(porMotivo).sort((a,b)=>b[1]-a[1]);
+    const maxM=motivos.length?motivos[0][1]:1;
     const pmEl = document.getElementById('devr-por-motivo');
-    if (pmEl) pmEl.innerHTML = devs.length
-      ? Object.entries(porDestino).map(([label, n]) =>
-          `<div class="bar-row"><span class="bar-lbl" style="font-size:11px;">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxD*100)}%;background:var(--g4)"></div></div><span class="bar-val">${n}</span></div>`).join('')
+    if (pmEl) pmEl.innerHTML = motivos.length
+      ? motivos.slice(0,6).map(([m,n],i)=>
+          `<div class="bar-row"><span class="bar-lbl" style="font-size:11px;">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxM*100)}%;background:var(--g4)"></div></div><span class="bar-val">${n}</span></div>`).join('')
       : '<div style="font-size:12px;color:var(--txt3);padding:12px 0;text-align:center;">Sin datos</div>';
 
     const tbody = document.getElementById('devr-tabla');
@@ -474,7 +471,7 @@ async function cargarDevRep() {
             <td style="font-weight:500">${d.nombre_prod}</td>
             <td style="color:var(--red-txt);font-weight:500">${d.cantidad}</td>
             <td style="color:var(--red-txt);font-weight:500">${mxPesos(d.monto)}</td>
-            <td style="font-size:12px">${d.regresar_inventario !== false ? 'Inventario' : 'Merma'}</td>
+            <td style="font-size:12px">${d.motivo||'—'}</td>
             <td style="font-size:12px">${d.forma_pago_regreso||'Efectivo'}</td>
             <td style="color:var(--txt3)">${d.cajero||'—'}</td>
           </tr>`;
@@ -485,11 +482,11 @@ async function cargarDevRep() {
 
 function exportarDevRep() {
   if (!_devRepData?.length) { showNotif('Sin datos para exportar'); return; }
-  const filas=[['Fecha','Hora','Ticket orig.','Producto','Cantidad','Monto','Destino','Reintegro','Cajero']];
+  const filas=[['Fecha','Hora','Ticket orig.','Producto','Cantidad','Monto','Motivo','Reintegro','Cajero']];
   _devRepData.forEach(d=>{
     const fecha=new Date(d.fecha);
     filas.push([fecha.toLocaleDateString('es-MX'),fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
-      `#${d.venta_id}`,d.nombre_prod,d.cantidad,d.monto.toFixed(2),d.regresar_inventario !== false ? 'Inventario' : 'Merma',d.forma_pago_regreso||'Efectivo',d.cajero||'—']);
+      `#${d.venta_id}`,d.nombre_prod,d.cantidad,d.monto.toFixed(2),d.motivo||'—',d.forma_pago_regreso||'Efectivo',d.cajero||'—']);
   });
   const desde=document.getElementById('dev-rep-desde')?.value;
   const hasta=document.getElementById('dev-rep-hasta')?.value;
@@ -572,7 +569,7 @@ async function _renderConteo() {
 
     _cierreData = { ventas, devs, efBruto, tjBruto, trBruto,
       efDev, tjDev, trDev, efSistema, tjSistema, trSistema,
-      ventasBrutas, totalDev, ventasNetas, totalGastos };
+      ventasBrutas, totalDev, ventasNetas };
 
     setTimeout(()=>_calcConteo(efSistema + fondo - totalGastos), 100);
   } catch(e) {
@@ -611,8 +608,7 @@ function _cambiarConteo(d, delta) {
   if (inp) inp.value = _conteo[d];
   const sub = document.getElementById(`rep-sub-${d}`);
   if (sub) sub.textContent = '$'+(d*_conteo[d]).toLocaleString('es-MX');
-  const gastos = (_cierreData?.totalGastos)||0;
-  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0) - gastos;
+  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0);
   _calcConteo(ef);
 }
 
@@ -620,8 +616,7 @@ function _updateConteo(d, v) {
   _conteo[d] = parseInt(v)||0;
   const sub = document.getElementById(`rep-sub-${d}`);
   if (sub) sub.textContent = '$'+(d*_conteo[d]).toLocaleString('es-MX');
-  const gastos = (_cierreData?.totalGastos)||0;
-  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0) - gastos;
+  const ef = ((_cierreData?.efSistema)||0) + (Estado.config.fondoInicial||0);
   _calcConteo(ef);
 }
 

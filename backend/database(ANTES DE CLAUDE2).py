@@ -158,7 +158,6 @@ class Devolucion(Base):
     cajero             = Column(String(100), default="")
     tienda_id          = Column(Integer, ForeignKey("tiendas.id"), nullable=True)
     forma_pago_regreso = Column(String(20), default="Efectivo")
-    regresar_inventario = Column(Boolean, default=True)
 
 
 class Config(Base):
@@ -250,7 +249,6 @@ def _migrar_columnas_nuevas():
         )""",
         "ALTER TABLE items_venta ADD COLUMN lote_id INTEGER",
         "ALTER TABLE items_venta ADD COLUMN costo_unit REAL DEFAULT 0.0",
-        "ALTER TABLE devoluciones ADD COLUMN regresar_inventario BOOLEAN DEFAULT 1",
         """CREATE TABLE IF NOT EXISTS gastos (
             id INTEGER PRIMARY KEY,
             monto REAL NOT NULL,

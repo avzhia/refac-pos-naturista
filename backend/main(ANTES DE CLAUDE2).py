@@ -911,7 +911,6 @@ def registrar_devolucion(data: DevolucionIn2, db: Session = Depends(get_db)):
         monto=data.monto, motivo=data.motivo, cajero=data.cajero,
         tienda_id=data.tienda_id, fecha=datetime.now(),
         forma_pago_regreso=data.forma_pago_regreso,
-        regresar_inventario=data.regresar_inventario,
     )
     db.add(dev)
 
@@ -971,7 +970,6 @@ def listar_devoluciones(
         "motivo": d.motivo,
         "cajero": d.cajero,
         "fecha": d.fecha.isoformat(),
-        "regresar_inventario": getattr(d, 'regresar_inventario', True),
         "forma_pago_regreso": getattr(d, 'forma_pago_regreso', 'Efectivo') or 'Efectivo',
     } for d in devs]
 

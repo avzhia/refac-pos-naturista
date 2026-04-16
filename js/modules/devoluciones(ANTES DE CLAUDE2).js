@@ -72,10 +72,6 @@ function _resetear() {
   if (devResumen)     devResumen.innerHTML          = '';
   if (motivoRow)      motivoRow.style.display       = 'none';
 
-  // Limpiar campo motivo de merma para evitar que persista entre operaciones
-  const motivoInput = document.getElementById('dev-motivo-merma');
-  if (motivoInput) motivoInput.value = '';
-
   _onTipoChange();
 }
 
@@ -271,7 +267,6 @@ function _onDestinoChange() {
   const destino  = document.querySelector('input[name="dev-destino"]:checked')?.value || 'inventario';
   const motivoRow = document.getElementById('dev-motivo-merma-row');
   if (motivoRow) motivoRow.style.display = destino === 'merma' ? '' : 'none';
-  _renderResumen(); // actualizar resumen al cambiar destino
 }
 
 function _renderResumen() {
@@ -373,37 +368,21 @@ async function confirmar() {
 
   try {
     for (const prod of _s.prodsSel) {
-      // ── Registrar devolución (siempre, para el historial) ──────────────────
-      // Si va a merma: regresar_inventario=false y sin motivo aquí
-      // (el motivo pertenece al registro de merma, no al de devolución).
       await API.registrarDevolucion({
-        venta_id:            _s.ventaSel.id,
-        producto_id:         prod.producto_id,
-        nombre_prod:         prod.nombre,
-        cantidad:            prod.qty_dev,
+        venta_id:           _s.ventaSel.id,
+        producto_id:        prod.producto_id,
+        nombre_prod:        prod.nombre,
+        cantidad:           prod.qty_dev,
         // CRÍTICO: monto basado en precio_unit (con descuento proporcional)
-        monto:               prod.precio_unit * prod.qty_dev,
-        motivo:              tipo === 'cambio'
+        monto:              prod.precio_unit * prod.qty_dev,
+        motivo:             tipo === 'cambio'
           ? `Cambio por ${_s.prodCambioSel?.nombre || 'otro producto'}`
-          : '',                // devolución a inventario o merma: motivo vacío aquí
+          : (motivo || 'Devolución'),
         cajero,
-        tienda_id:           tiendaId,
+        tienda_id:          tiendaId,
         regresar_inventario: destino === 'inventario',
-        forma_pago_regreso:  pagoReg,
+        forma_pago_regreso: pagoReg,
       });
-
-      // ── Si destino es merma: crear también el registro de merma ───────────
-      if (destino === 'merma') {
-        await API.registrarMerma({
-          producto_id: prod.producto_id,
-          nombre_prod: prod.nombre,
-          lote_id:     null,
-          cantidad:    prod.qty_dev,
-          motivo:      motivo || 'Baja por devolución',
-          cajero,
-          tienda_id:   tiendaId,
-        });
-      }
     }
 
     // Si es cambio, registrar nueva venta con el producto de cambio
