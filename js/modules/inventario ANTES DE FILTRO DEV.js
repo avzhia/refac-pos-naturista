@@ -148,7 +148,6 @@ function render() {
       if (estFilt === 'stock' && st <= 0)                  return false;
       if (estFilt === 'venc'  && !(dias !== null && dias < 0)) return false;
       if (estFilt === 'prox'  && !(dias !== null && dias >= 0 && dias <= 30)) return false;
-      if (estFilt === 'dev'   && !(p.lotes||[]).some(l => l.numero_lote === 'DEV' && l.stock > 0)) return false;
     }
     return true;
   });
