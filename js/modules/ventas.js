@@ -13,6 +13,8 @@ const _s = {
   catActiva: 'Todas',
   pagoSel:   'Efectivo',
   dropIdx:   -1,
+  scanBuffer: '',
+  scanTimer:  null,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -382,6 +384,38 @@ async function confirmarCobro() {
   }
 }
 
+// ── Lector de código de barras ────────────────────────────────────────────────
+
+function _procesarScan(codigo) {
+  const prod = Estado.productos.find(p => p.codigo_barras === codigo);
+  if (prod) {
+    agregarAlTicket(prod.id);
+  } else {
+    showNotif('⚠ Código no encontrado: ' + codigo);
+  }
+}
+
+function _initScanner() {
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('v-prod-grid')) return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if (e.key === 'Enter') {
+      if (_s.scanBuffer.length > 2) _procesarScan(_s.scanBuffer);
+      _s.scanBuffer = '';
+      clearTimeout(_s.scanTimer);
+      return;
+    }
+
+    if (e.key.length === 1) {
+      _s.scanBuffer += e.key;
+      clearTimeout(_s.scanTimer);
+      _s.scanTimer = setTimeout(() => { _s.scanBuffer = ''; }, 100);
+    }
+  });
+}
+
 // ── Forma de pago ─────────────────────────────────────────────────────────────
 
 function selPago(pago) {
@@ -454,6 +488,9 @@ function conectar() {
     ?.addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('pos:abrir-devolucion'));
     });
+
+  // Lector de código de barras
+  _initScanner();
 
   // Navegar a ventas
   document.addEventListener('pos:navegar', e => {
