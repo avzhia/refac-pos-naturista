@@ -196,6 +196,19 @@ class Gasto(Base):
     fecha       = Column(DateTime, default=datetime.now)
 
 
+class Turno(Base):
+    __tablename__ = "turnos"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    cajero_id      = Column(Integer, ForeignKey("cajeros.id"), nullable=False)
+    cajero_nombre  = Column(String(200), nullable=False)
+    tienda_id      = Column(Integer, ForeignKey("tiendas.id"), nullable=False)
+    fondo_inicial  = Column(Float, default=0.0)
+    fecha_apertura = Column(DateTime, default=datetime.now)
+    fecha_cierre   = Column(DateTime, nullable=True)
+    activo         = Column(Boolean, default=True)
+
+
 class CierreCaja(Base):
     __tablename__ = "cierres_caja"
 
@@ -259,6 +272,16 @@ def _migrar_columnas_nuevas():
             cajero VARCHAR(100) DEFAULT '',
             tienda_id INTEGER,
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS turnos (
+            id INTEGER PRIMARY KEY,
+            cajero_id INTEGER NOT NULL REFERENCES cajeros(id),
+            cajero_nombre VARCHAR(200) NOT NULL,
+            tienda_id INTEGER NOT NULL REFERENCES tiendas(id),
+            fondo_inicial REAL DEFAULT 0.0,
+            fecha_apertura DATETIME DEFAULT CURRENT_TIMESTAMP,
+            fecha_cierre DATETIME,
+            activo BOOLEAN DEFAULT 1
         )""",
     ]
     with engine.connect() as conn:

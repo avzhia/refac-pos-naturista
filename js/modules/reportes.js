@@ -673,6 +673,10 @@ async function confirmarCierreOk() {
       diferencia:         contado-((cd.efSistema||0)+fondo),
       tickets:            cd.ventas?cd.ventas.length:0,
     });
+    // Cerrar turno activo en backend si existe
+    if (Estado.config.turnoId) {
+      await API.post(`/api/turnos/cerrar/${Estado.config.turnoId}`, {}).catch(() => {});
+    }
     document.getElementById('modal-cierre')?.classList.remove('open');
     _DENOMS.forEach(d=>_conteo[d]=0);
     _cierreData = null;
@@ -1000,6 +1004,8 @@ function conectar() {
   // Navegar a reportes
   document.addEventListener('pos:navegar', e => {
     if (e.detail?.modulo === 'reportes') {
+      // Siempre abrir en tab hoy al navegar a reportes
+      setPanel('hoy', document.querySelector('.sec-tab[data-panel="hoy"]'));
       // Inicializar preset si no tiene valor
       if (!document.getElementById('rep-fecha-desde')?.value) {
         const mesBtn = document.querySelector('#rep-ventas .preset-btn[data-preset="mes"]');

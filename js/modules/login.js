@@ -109,13 +109,39 @@ function _checkBtn() {
   const btn        = document.getElementById('login-btn');
   const fondo      = document.getElementById('login-fondo');
   const fondoError = document.getElementById('login-fondo-error');
+  const fondoRow   = document.getElementById('login-fondo-row');
   if (!btn) return;
-  const listo = _state.tiendaSel && _state.cajeroSel && (fondo?.value ?? '') !== '';
-  btn.disabled = !listo;
-  // Mostrar leyenda si cajero seleccionado y fondo vacío
-  if (fondoError) {
-    fondoError.style.display = (_state.cajeroSel && !(fondo?.value ?? '')) ? '' : 'none';
+
+  if (!_state.tiendaSel || !_state.cajeroSel) {
+    btn.disabled = true;
+    if (fondoError) fondoError.style.display = 'none';
+    return;
   }
+
+  // Consultar turno activo para decidir si mostrar fondo
+  API.get(`/api/turnos/activo?cajero_id=${_state.cajeroSel.id}&tienda_id=${_state.tiendaSel.id}`)
+    .then(resp => {
+      if (resp?.activo) {
+        // Hay turno activo — ocultar fondo y habilitar botón
+        if (fondoRow) fondoRow.style.display = 'none';
+        if (fondoError) fondoError.style.display = 'none';
+        btn.disabled = false;
+      } else {
+        // No hay turno — mostrar fondo y validar
+        if (fondoRow) fondoRow.style.display = '';
+        const listo = (fondo?.value ?? '') !== '';
+        btn.disabled = !listo;
+        if (fondoError) {
+          fondoError.style.display = (!listo) ? '' : 'none';
+        }
+      }
+    })
+    .catch(() => {
+      // Error de red — mostrar fondo normalmente
+      if (fondoRow) fondoRow.style.display = '';
+      const listo = (fondo?.value ?? '') !== '';
+      btn.disabled = !listo;
+    });
 }
 
 // ── Entrar ────────────────────────────────────────────────────────────────────
@@ -124,15 +150,6 @@ async function entrar() {
   const fondoInput = document.getElementById('login-fondo');
   const fondoError = document.getElementById('login-fondo-error');
   const pinInput   = document.getElementById('login-pin');
-
-  // Validar fondo
-  const fondo = parseFloat(fondoInput?.value ?? '');
-  if (!fondoInput?.value || isNaN(fondo)) {
-    fondoError.style.display = '';
-    fondoInput?.focus();
-    return;
-  }
-  fondoError.style.display = 'none';
 
   // Validar PIN si aplica
   if (_state.cajeroSel?.tiene_pin) {
@@ -158,13 +175,50 @@ async function entrar() {
     }
   }
 
+  // Consultar si hay turno activo en backend
+  let turnoActivo = null;
+  try {
+    const turnoResp = await API.get(`/api/turnos/activo?cajero_id=${_state.cajeroSel.id}&tienda_id=${_state.tiendaSel.id}`);
+    if (turnoResp?.activo) turnoActivo = turnoResp;
+  } catch(e) {}
+
+  // Si no hay turno activo, validar fondo
+  if (!turnoActivo) {
+    const fondo = parseFloat(fondoInput?.value ?? '');
+    if (!fondoInput?.value || isNaN(fondo)) {
+      fondoError.style.display = '';
+      fondoInput?.focus();
+      return;
+    }
+    fondoError.style.display = 'none';
+
+    // Abrir turno nuevo
+    try {
+      const nuevoTurno = await API.post('/api/turnos/abrir', {
+        cajero_id:     _state.cajeroSel.id,
+        tienda_id:     _state.tiendaSel.id,
+        fondo_inicial: fondo,
+      });
+      Estado.config.fondoInicial = fondo;
+      Estado.config.apertura     = nuevoTurno.fecha_apertura;
+      Estado.config.turnoId      = nuevoTurno.turno_id;
+    } catch(e) {
+      Estado.config.fondoInicial = fondo;
+      Estado.config.apertura     = new Date().toISOString();
+      Estado.config.turnoId      = null;
+    }
+  } else {
+    // Retomar turno existente
+    Estado.config.fondoInicial = turnoActivo.fondo_inicial;
+    Estado.config.apertura     = turnoActivo.fecha_apertura;
+    Estado.config.turnoId      = turnoActivo.turno_id;
+  }
+
   // Guardar sesión
   Estado.config.cajero       = _state.cajeroSel.nombre;
   Estado.config.cajeroId     = _state.cajeroSel.id;
   Estado.config.tiendaId     = _state.tiendaSel.id;
   Estado.config.tiendaNombre = _state.tiendaSel.nombre;
-  Estado.config.fondoInicial = fondo;
-  Estado.config.apertura     = new Date().toISOString();
   Estado.guardarSesion();
 
   // Actualizar UI

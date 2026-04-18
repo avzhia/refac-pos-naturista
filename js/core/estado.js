@@ -23,6 +23,7 @@ const Estado = {
     tiendaNombre: null,
     fondoInicial: 0,
     apertura:     null,   // ISO string
+    turnoId:      null,   // ID del turno activo en backend
     negocio:      'TiendaNaturistaMX',
     logoEmoji:    '🌿',
   },
@@ -59,6 +60,7 @@ const Estado = {
       tiendaNombre: null,
       fondoInicial: 0,
       apertura:     null,
+      turnoId:      null,
       negocio:      this.config.negocio,
       logoEmoji:    this.config.logoEmoji,
     };

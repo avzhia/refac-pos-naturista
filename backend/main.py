@@ -12,7 +12,7 @@ import os
 from database import crear_tablas, get_db, insertar_datos_iniciales, Gasto
 from backup_db import hacer_respaldo
 from database import (Producto, Lote, Cliente, Venta, ItemVenta,
-                      CierreCaja, Tienda, Cajero, Categoria, Devolucion, Merma, Config, Proveedor)
+                      CierreCaja, Tienda, Cajero, Categoria, Devolucion, Merma, Config, Proveedor, Turno)
 import hashlib
 
 app = FastAPI(title="TiendaNaturistaMX POS")
@@ -1135,6 +1135,75 @@ def ventas_periodo(desde: date, hasta: date, tienda_id: Optional[int] = None, db
 #  CIERRE DE CAJA
 # ══════════════════════════════════════
 
+@app.post("/api/turnos/abrir")
+def abrir_turno(data: dict, db: Session = Depends(get_db)):
+    cajero_id     = data.get("cajero_id")
+    tienda_id     = data.get("tienda_id")
+    fondo_inicial = data.get("fondo_inicial", 0.0)
+
+    if not cajero_id or not tienda_id:
+        raise HTTPException(status_code=400, detail="cajero_id y tienda_id son requeridos")
+
+    cajero = db.query(Cajero).filter(Cajero.id == cajero_id, Cajero.activo == True).first()
+    if not cajero:
+        raise HTTPException(status_code=404, detail="Cajero no encontrado")
+
+    # Cerrar cualquier turno activo previo del mismo cajero+tienda
+    db.query(Turno).filter(
+        Turno.cajero_id == cajero_id,
+        Turno.tienda_id == tienda_id,
+        Turno.activo == True
+    ).update({"activo": False, "fecha_cierre": datetime.now()})
+
+    turno = Turno(
+        cajero_id     = cajero_id,
+        cajero_nombre = cajero.nombre,
+        tienda_id     = tienda_id,
+        fondo_inicial = fondo_inicial,
+        fecha_apertura= datetime.now(),
+        activo        = True
+    )
+    db.add(turno)
+    db.commit()
+    db.refresh(turno)
+    return {
+        "ok": True,
+        "turno_id": turno.id,
+        "fondo_inicial": turno.fondo_inicial,
+        "fecha_apertura": turno.fecha_apertura.isoformat()
+    }
+
+
+@app.get("/api/turnos/activo")
+def turno_activo(cajero_id: int, tienda_id: int, db: Session = Depends(get_db)):
+    turno = db.query(Turno).filter(
+        Turno.cajero_id == cajero_id,
+        Turno.tienda_id == tienda_id,
+        Turno.activo == True
+    ).order_by(Turno.fecha_apertura.desc()).first()
+
+    if not turno:
+        return {"activo": False}
+
+    return {
+        "activo": True,
+        "turno_id": turno.id,
+        "fondo_inicial": turno.fondo_inicial,
+        "fecha_apertura": turno.fecha_apertura.isoformat()
+    }
+
+
+@app.post("/api/turnos/cerrar/{turno_id}")
+def cerrar_turno(turno_id: int, db: Session = Depends(get_db)):
+    turno = db.query(Turno).filter(Turno.id == turno_id, Turno.activo == True).first()
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado o ya cerrado")
+    turno.activo       = False
+    turno.fecha_cierre = datetime.now()
+    db.commit()
+    return {"ok": True}
+
+
 @app.post("/api/cierre")
 def registrar_cierre(data: CierreIn, db: Session = Depends(get_db)):
     datos = data.model_dump()
@@ -1150,6 +1219,15 @@ def registrar_cierre(data: CierreIn, db: Session = Depends(get_db)):
     db.add(cierre)
     db.commit()
     db.refresh(cierre)
+
+    # Cerrar turno activo del cajero si existe
+    db.query(Turno).filter(
+        Turno.cajero_nombre == data.cajero,
+        Turno.tienda_id == (data.tienda_id or 1),
+        Turno.activo == True
+    ).update({"activo": False, "fecha_cierre": datetime.now()})
+    db.commit()
+
     return {"ok": True, "cierre_id": cierre.id}
 
 @app.post("/api/gastos", response_model=GastoOut)
