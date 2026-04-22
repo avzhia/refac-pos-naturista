@@ -19,7 +19,7 @@
   <div class="login-box">
     <div class="login-logo">
       <img id="login-logo-img" src="" style="display:none;width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:6px;">
-      <span id="login-logo-emoji">🌿 TiendaNaturistaMX</span>
+      <span id="login-logo-emoji"><span id="login-logo-emoji-icon">🌿 </span><span id="login-logo-name">TiendaNaturistaMX</span></span>
     </div>
     <div class="login-sub" style="margin-bottom:6px;">Primera configuración del sistema</div>
     <div style="background:var(--g8);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--txt2);margin-bottom:20px;">
@@ -46,10 +46,16 @@
   <div class="admin-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <h2>⚙ Administración</h2>
-      <button id="admin-cerrar-btn"
-        style="padding:6px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;">
-        ✕ Cerrar
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="admin-historial-btn"
+          style="padding:6px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:var(--g2);">
+          📋 Historial cierres
+        </button>
+        <button id="admin-cerrar-btn"
+          style="padding:6px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;">
+          ✕ Cerrar
+        </button>
+      </div>
     </div>
     <div class="admin-sub">Solo visible para el administrador</div>
 
@@ -151,13 +157,30 @@
         </button>
       </div>
     </div>
+
+  </div>
+</div>
+
+<!-- Modal historial cierres -->
+<div class="modal-bg" id="modal-cierres" style="z-index:9300;">
+  <div class="modal-box" style="width:700px;max-width:96vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:16px;color:var(--g1);">📋 Historial de cierres</h3>
+      <button id="modal-cierres-close"
+        style="padding:6px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:inherit;">
+        ✕ Cerrar
+      </button>
+    </div>
+    <div id="admin-cierres-lista" style="overflow-x:auto;">
+      <div style="font-size:12px;color:var(--txt3);padding:8px 0;">Cargando...</div>
+    </div>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════
      MODAL CONFIRMACIÓN GENÉRICO
 ══════════════════════════════════════ -->
-<div class="modal-bg" id="modal-confirm" style="z-index:700;">
+<div class="modal-bg" id="modal-confirm" style="z-index:9200;">
   <div class="modal-box" style="width:340px;">
     <h3 id="modal-confirm-title">¿Estás seguro?</h3>
     <p id="modal-confirm-msg" style="font-size:13px;color:var(--txt2);margin:8px 0 18px;"></p>
@@ -194,7 +217,7 @@
   <div class="login-box">
     <div class="login-logo">
       <img id="login-logo-img2" src="" style="display:none;width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:6px;">
-      <span id="login-logo-emoji2">🌿 TiendaNaturistaMX</span>
+      <span id="login-logo-emoji2"><span id="login-logo-emoji2-icon">🌿 </span><span id="login-logo-name2">TiendaNaturistaMX</span></span>
     </div>
     <div class="login-sub">Selecciona tienda y cajero para iniciar turno</div>
 
@@ -357,6 +380,7 @@
       <input class="inv-search" placeholder="🔍  Buscar producto..." id="inv-search-input">
       <select class="filt-sel" id="inv-filt-cat"><option value="">Todas las categorías</option></select>
       <select class="filt-sel" id="inv-filt-prov"><option value="">Todos los proveedores</option></select>
+      <select class="filt-sel" id="inv-filt-marca"><option value="">Todas las marcas</option></select>
       <select class="filt-sel" id="inv-filt-est">
         <option value="">Todos los estados</option>
         <option value="stock">Con stock</option>
@@ -370,7 +394,13 @@
       <button class="btn-outline" id="inv-btn-cats">📂 Categorías</button>
       <button class="btn-outline" id="inv-btn-provs">🏭 Proveedores</button>
       <button class="btn-outline" id="inv-btn-import">⬆ Importar CSV</button>
-      <button class="btn-outline" id="inv-btn-export">⬇ Exportar lista</button>
+      <div class="inv-export-wrap" id="inv-export-wrap">
+        <button class="btn-outline" id="inv-btn-export">⬇ Exportar ▾</button>
+        <div class="inv-export-menu" id="inv-export-menu">
+          <div class="inv-export-opt" id="inv-export-producto">📦 Por producto</div>
+          <div class="inv-export-opt" id="inv-export-lote">🗂 Por lote</div>
+        </div>
+      </div>
       <input type="file" id="inv-csv-input" accept=".csv" style="display:none">
     </div>
     <div class="inv-wrap">
@@ -387,6 +417,11 @@
   <div class="modal-box">
     <h3 id="modal-prod-title">Agregar producto</h3>
     <div class="form-row"><label>Nombre del producto</label><input type="text" id="inv-f-nombre" placeholder="Ej. Cúrcuma orgánica 250g"></div>
+    <div class="form-row" style="position:relative;">
+      <label>Marca <span style="font-size:11px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
+      <input type="text" id="inv-f-marca" placeholder="Ej. Natural Yazmin, Joy Natura..." autocomplete="off">
+      <div id="inv-marca-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--border2);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;max-height:160px;overflow-y:auto;margin-top:2px;"></div>
+    </div>
     <div class="form-row"><label>Categoría</label>
       <div style="display:flex;gap:6px;">
         <select id="inv-f-cat" style="flex:1;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:inherit;background:#fff;"></select>
@@ -395,8 +430,14 @@
     </div>
     <div class="form-row">
       <label>Ícono</label>
-      <input type="text" id="inv-f-icon" placeholder="🌿" style="text-align:center;font-size:18px;width:70px;padding:6px;border:1px solid var(--border2);border-radius:7px;">
-      <div class="icon-grid" id="inv-icon-grid"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="text" id="inv-f-icon" placeholder="🌿" style="text-align:center;font-size:18px;width:56px;padding:6px;border:1px solid var(--border2);border-radius:7px;">
+        <button type="button" id="inv-icon-toggle" style="padding:6px 12px;border:1px solid var(--border2);border-radius:7px;background:#fff;font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;">Elegir ícono ▾</button>
+      </div>
+      <div id="inv-icon-panel" style="display:none;margin-top:8px;border:1.5px solid var(--border);border-radius:10px;padding:10px;background:var(--g8);">
+        <input type="text" id="inv-icon-search" placeholder="🔍 Buscar ícono..." style="width:100%;padding:6px 10px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+        <div class="icon-grid" id="inv-icon-grid"></div>
+      </div>
     </div>
     <div class="form-2col">
       <div class="form-row"><label>Precio de venta ($)</label><input type="number" id="inv-f-precio" min="0" placeholder="0.00"></div>
@@ -405,6 +446,10 @@
     <div class="form-row">
       <label>Código de barras <span style="font-size:11px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
       <input type="text" id="inv-f-barcode" placeholder="Ej. 7501234567890">
+    </div>
+    <div class="form-row">
+      <label>Link eCommerce <span style="font-size:11px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
+      <input type="url" id="inv-f-url-ec" placeholder="https://mitienda.com/productos/nombre">
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" id="modal-prod-cancel">Cancelar</button>
@@ -645,7 +690,7 @@
         </div>
         <div style="overflow-x:auto;">
           <table class="tabla">
-            <thead><tr><th>Hora</th><th>Cliente</th><th>Cajero</th><th>Productos</th><th>Pago</th><th style="text-align:right">Total</th></tr></thead>
+            <thead><tr><th>Hora</th><th>Cliente</th><th>Cajero</th><th>Tienda</th><th>Productos</th><th>Pago</th><th style="text-align:right">Total</th></tr></thead>
             <tbody id="rep-ultimas"></tbody>
           </table>
         </div>

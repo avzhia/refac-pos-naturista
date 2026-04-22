@@ -70,8 +70,7 @@ async function initHoy() {
     if (mesBtn) setPreset('mes', mesBtn);
   }
   try {
-    const tid     = Estado.config.tiendaId || '';
-    const resumen = await API.get(`/api/reportes/resumen?limite=200${tid?'&tienda_id='+tid:''}`);
+    const resumen = await API.get(`/api/reportes/resumen?limite=200`);
     const pago    = resumen.por_forma_pago || {};
     const ef = pago['Efectivo']||0, tj = pago['Tarjeta']||0, tr = pago['Transfer.']||0;
     const maxP = Math.max(ef, tj, tr, 1);
@@ -155,12 +154,13 @@ function _renderUltimas(data) {
           <td style="color:var(--txt3);white-space:nowrap">${hora}</td>
           <td>${cliente}</td>
           <td style="color:var(--txt3)">${v.cajero||'—'}</td>
+          <td style="color:var(--txt3);font-size:12px">${v.tienda_nombre||'—'}</td>
           <td style="font-size:12px;color:var(--txt2)">${prods}</td>
           <td><span class="badge ${bc}">${pago}</span></td>
           <td style="text-align:right;font-weight:500;color:var(--g1);white-space:nowrap">${mxPesos(v.total)}</td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:20px;">Sin ventas registradas hoy</td></tr>';
+    : '<tr><td colspan="7" style="text-align:center;color:var(--txt3);padding:20px;">Sin ventas registradas hoy</td></tr>';
 }
 
 // ── PANEL VENTAS ──────────────────────────────────────────────────────────────
@@ -195,8 +195,7 @@ async function renderVentas() {
   _set('rep-chart-title', `Ventas del ${desdeStr} al ${hastaStr}`);
 
   try {
-    const tid = Estado.config.tiendaId || '';
-    const res = await API.get(`/api/reportes/ventas-periodo?desde=${desdeStr}&hasta=${hastaStr}${tid?'&tienda_id='+tid:''}`);
+    const res = await API.get(`/api/reportes/ventas-periodo?desde=${desdeStr}&hasta=${hastaStr}`);
 
     _set('rep-k-total',   mxPesos(res.total||0));
     _set('rep-k-dias',    `${dias} día(s) seleccionados`);
@@ -274,8 +273,7 @@ async function _cargarDatosProductos() {
   try {
     const desdeStr = document.getElementById('rep-fecha-desde')?.value || fechaHoyLocal();
     const hastaStr = document.getElementById('rep-fecha-hasta')?.value || fechaHoyLocal();
-    const tid = Estado.config.tiendaId||'';
-    const res = await API.get(`/api/reportes/ventas-periodo?desde=${desdeStr}&hasta=${hastaStr}${tid?'&tienda_id='+tid:''}`);
+    const res = await API.get(`/api/reportes/ventas-periodo?desde=${desdeStr}&hasta=${hastaStr}`);
     _topCache = { top_uds:res.top_uds||[], top_ing:res.top_ing||[], por_cat:res.por_categoria||{} };
     _renderProductos(_topCache);
   } catch(e) { console.error('[reportes] _cargarDatosProductos:', e); }
@@ -422,9 +420,8 @@ async function cargarDevRep() {
   const desde = document.getElementById('dev-rep-desde')?.value;
   const hasta = document.getElementById('dev-rep-hasta')?.value;
   if (!desde||!hasta) return;
-  const tid = Estado.config.tiendaId||'';
   try {
-    const devs = await API.get(`/api/devoluciones?desde=${desde}&hasta=${hasta}${tid?'&tienda_id='+tid:''}`);
+    const devs = await API.get(`/api/devoluciones?desde=${desde}&hasta=${hasta}`);
     _devRepData = devs;
     const totalMonto = devs.reduce((s,d)=>s+d.monto,0);
     const porProd = {};
@@ -772,19 +769,18 @@ async function cargarGanancias() {
 
 function exportarHoy() {
   const hoy = fechaHoyLocal();
-  const tid = Estado.config.tiendaId||'';
-  API.get(`/api/ventas?desde=${hoy}&hasta=${hoy}${tid?'&tienda_id='+tid:''}`)
+  API.get(`/api/ventas?desde=${hoy}&hasta=${hoy}`)
     .then(ventas=>{
       if (!ventas.length) { showNotif('Sin ventas hoy'); return; }
-      const filas=[['Hora','Venta ID','Cliente','Cajero','Forma pago','Producto','Cantidad','Precio unit','Subtotal']];
+      const filas=[['Hora','Venta ID','Cliente','Cajero','Tienda','Forma pago','Producto','Cantidad','Precio unit','Subtotal']];
       ventas.forEach(v=>{
         const d=new Date(v.fecha);
         const hora=d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
         if (v.items?.length) {
-          v.items.forEach(item=>filas.push([hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.forma_pago,
+          v.items.forEach(item=>filas.push([hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.tienda_nombre||'—',v.forma_pago,
             item.nombre,item.cantidad,item.precio_unit?.toFixed(2)||'—',item.subtotal?.toFixed(2)||'—']));
         } else {
-          filas.push([hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.forma_pago,'—','—','—',v.total.toFixed(2)]);
+          filas.push([hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.tienda_nombre||'—',v.forma_pago,'—','—','—',v.total.toFixed(2)]);
         }
       });
       _descargarCSV(filas,`ventas_hoy_${hoy}.csv`);
@@ -796,19 +792,19 @@ function exportarCSV() {
   const desdeStr=document.getElementById('rep-fecha-desde')?.value;
   const hastaStr=document.getElementById('rep-fecha-hasta')?.value;
   if (!desdeStr||!hastaStr) { showNotif('⚠ Selecciona el rango de fechas'); return; }
-  API.get(`/api/ventas?desde=${desdeStr}&hasta=${hastaStr}${Estado.config.tiendaId?'&tienda_id='+Estado.config.tiendaId:''}`)
+  API.get(`/api/ventas?desde=${desdeStr}&hasta=${hastaStr}`)
     .then(ventas=>{
       if (!ventas.length) { showNotif('Sin ventas en el periodo seleccionado'); return; }
-      const filas=[['Fecha','Hora','Venta ID','Cliente','Cajero','Forma pago','Producto','Cantidad','Precio unit','Subtotal']];
+      const filas=[['Fecha','Hora','Venta ID','Cliente','Cajero','Tienda','Forma pago','Producto','Cantidad','Precio unit','Subtotal']];
       ventas.forEach(v=>{
         const d=new Date(v.fecha);
         const fecha=d.toLocaleDateString('es-MX');
         const hora=d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
         if (v.items?.length) {
-          v.items.forEach(item=>filas.push([fecha,hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.forma_pago,
+          v.items.forEach(item=>filas.push([fecha,hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.tienda_nombre||'—',v.forma_pago,
             item.nombre,item.cantidad,item.precio_unit?.toFixed(2)||'—',item.subtotal?.toFixed(2)||'—']));
         } else {
-          filas.push([fecha,hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.forma_pago,'—','—','—',v.total.toFixed(2)]);
+          filas.push([fecha,hora,v.id,v.cliente_nombre||'—',v.cajero||'—',v.tienda_nombre||'—',v.forma_pago,'—','—','—',v.total.toFixed(2)]);
         }
       });
       _descargarCSV(filas,`ventas_${desdeStr}_${hastaStr}.csv`);
@@ -848,9 +844,8 @@ async function cargarGastos() {
   const desde = document.getElementById('gasto-desde')?.value;
   const hasta = document.getElementById('gasto-hasta')?.value;
   if (!desde || !hasta) return;
-  const tid = Estado.config.tiendaId || '';
   try {
-    const gastos = await API.get(`/api/gastos?desde=${desde}&hasta=${hasta}${tid ? '&tienda_id='+tid : ''}`);
+    const gastos = await API.get(`/api/gastos?desde=${desde}&hasta=${hasta}`);
     _gastosData = gastos;
     const total = gastos.reduce((s, g) => s + g.monto, 0);
     _set('gasto-kpi-total', mxPesos(total));

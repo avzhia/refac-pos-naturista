@@ -56,6 +56,8 @@ class Producto(Base):
     stock_min = Column(Integer, default=5)
     activo          = Column(Boolean, default=True)
     codigo_barras   = Column(String(100), nullable=True, default=None)
+    marca           = Column(String(100), nullable=True, default='Genérico')
+    url_ecommerce   = Column(String(500), nullable=True, default=None)
 
     lotes = relationship("Lote", back_populates="producto", cascade="all, delete-orphan")
 
@@ -283,14 +285,20 @@ def _migrar_columnas_nuevas():
             fecha_cierre DATETIME,
             activo BOOLEAN DEFAULT 1
         )""",
+        "ALTER TABLE productos ADD COLUMN marca VARCHAR(100) DEFAULT 'Genérico'",
+        "ALTER TABLE productos ADD COLUMN url_ecommerce VARCHAR(500)",
     ]
     with engine.connect() as conn:
         for sql in columnas:
             try:
                 conn.execute(text(sql))
                 conn.commit()
-            except Exception:
-                pass  # columna ya existe, ignorar
+            except Exception as e:
+                msg = str(e).lower()
+                if 'duplicate column' in msg or 'already exists' in msg:
+                    pass  # columna/tabla ya existe — esperado
+                else:
+                    print(f'[migración] Advertencia: {sql[:80]} → {e}')
 
 
 def get_db():

@@ -286,6 +286,7 @@ async function subirLogo() {
     showNotif('✓ Logo actualizado');
   } catch(e) {
     showNotif('⚠ Error al subir logo');
+    return;
   }
 }
 
@@ -293,7 +294,7 @@ async function quitarLogo() {
   const ok = await confirmar('¿Quitar el logo de la tienda?', 'Quitar logo');
   if (!ok) return;
   try {
-    await API.post('/api/admin/logo/quitar', {});
+    await API.delete('/api/admin/logo');
     document.getElementById('admin-logo-preview').innerHTML = '<span style="font-size:28px;">🌿</span>';
     actualizarLogo();
     showNotif('✓ Logo quitado');
@@ -416,10 +417,65 @@ function conectar() {
 
   // Evento global para abrir admin desde login
   document.addEventListener('pos:abrir-admin', abrirLogin);
+
+  // Modal historial cierres
+  document.getElementById('admin-historial-btn')?.addEventListener('click', () => {
+    document.getElementById('modal-cierres')?.classList.add('open');
+    _cargarCierres();
+  });
+  document.getElementById('modal-cierres-close')?.addEventListener('click', () => {
+    document.getElementById('modal-cierres')?.classList.remove('open');
+  });
+  document.getElementById('modal-cierres')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) document.getElementById('modal-cierres')?.classList.remove('open');
+  });
 }
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', conectar);
+
+async function _cargarCierres() {
+  const cont = document.getElementById('admin-cierres-lista');
+  if (!cont) return;
+  try {
+    const cierres = await API.getCierres();
+    if (!cierres.length) {
+      cont.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:8px 0;">Sin cierres registrados.</div>';
+      return;
+    }
+    const fmt = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
+    const filas = cierres.map(cl => {
+      const fecha    = new Date(cl.fecha_cierre);
+      const fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'America/Mexico_City'});
+      const horaStr  = fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',timeZone:'America/Mexico_City'});
+      const diff      = cl.diferencia || 0;
+      const diffColor = diff === 0 ? 'var(--green-txt)' : diff > 0 ? 'var(--blue-txt)' : 'var(--red-txt)';
+      const diffStr   = diff === 0 ? '✓ $0.00' : (diff > 0 ? '+' : '') + fmt(diff);
+      return '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:7px 8px;color:var(--txt3);white-space:nowrap;">' + fechaStr + ' ' + horaStr + '</td>' +
+        '<td style="padding:7px 8px;">' + (cl.cajero||'—') + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;">' + (cl.tickets||0) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-weight:500;color:var(--g1);">' + fmt(cl.total_ventas) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;">' + fmt(cl.efectivo_contado) + '</td>' +
+        '<td style="padding:7px 8px;text-align:right;font-weight:600;color:' + diffColor + ';">' + diffStr + '</td>' +
+        '</tr>';
+    }).join('');
+    cont.innerHTML =
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+        '<thead><tr style="background:var(--g8);color:var(--txt2);">' +
+          '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid var(--border);">Fecha cierre</th>' +
+          '<th style="padding:7px 8px;text-align:left;border-bottom:1px solid var(--border);">Cajero</th>' +
+          '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid var(--border);">Tickets</th>' +
+          '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid var(--border);">Ventas netas</th>' +
+          '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid var(--border);">Ef. contado</th>' +
+          '<th style="padding:7px 8px;text-align:right;border-bottom:1px solid var(--border);">Diferencia</th>' +
+        '</tr></thead>' +
+        '<tbody>' + filas + '</tbody>' +
+      '</table>';
+  } catch(e) {
+    cont.innerHTML = '<div style="font-size:12px;color:var(--red-txt);padding:8px 0;">⚠ Error al cargar cierres.</div>';
+  }
+}
 
 export default { abrirLogin, guardarSetup };

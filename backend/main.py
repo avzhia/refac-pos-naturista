@@ -95,11 +95,15 @@ class ProductoIn(BaseModel):
     precio: float
     stock_min: int = 5
     codigo_barras: Optional[str] = None
+    marca: Optional[str] = "Genérico"
+    url_ecommerce: Optional[str] = None
 
 class ProductoOut(ProductoIn):
     id: int
     activo: bool
     codigo_barras: Optional[str] = None
+    marca: Optional[str] = "Genérico"
+    url_ecommerce: Optional[str] = None
     lotes: list[LoteOut] = []
     class Config: from_attributes = True
 
@@ -566,6 +570,7 @@ def listar_productos(db: Session = Depends(get_db)):
             "id": p.id, "nombre": p.nombre, "categoria": p.categoria,
             "icono": p.icono, "precio": p.precio, "stock_min": p.stock_min,
             "codigo_barras": p.codigo_barras, "activo": p.activo,
+            "marca": p.marca or "Genérico", "url_ecommerce": p.url_ecommerce,
             "lotes": [{
                 "id": l.id, "numero_lote": l.numero_lote,
                 "caduca": l.caduca,
@@ -793,6 +798,7 @@ def listar_ventas(
         "cliente_id": v.cliente_id,
         "cliente_nombre": v.cliente.nombre if v.cliente else "—",
         "tienda_id": v.tienda_id,
+        "tienda_nombre": v.tienda.nombre if v.tienda else "—",
         "fecha": v.fecha.isoformat(),
         "forma_pago": v.forma_pago,
         "total": v.total,
@@ -1026,6 +1032,7 @@ def resumen_hoy(tienda_id: Optional[int] = None, limite: int = 200, db: Session 
         "hora": v.fecha.strftime("%I:%M %p"),
         "cliente_nombre": v.cliente.nombre if v.cliente else "—",
         "cajero": v.cajero or "—",
+        "tienda_nombre": v.tienda.nombre if v.tienda else "—",
         "forma_pago": v.forma_pago,
         "total": v.total,
         "items": [{"nombre": i.nombre_prod, "cantidad": i.cantidad,
@@ -1283,7 +1290,22 @@ def listar_cierres(tienda_id: Optional[int] = None, db: Session = Depends(get_db
     q = db.query(CierreCaja)
     if tienda_id:
         q = q.filter(CierreCaja.tienda_id == tienda_id)
-    return q.order_by(CierreCaja.fecha_cierre.desc()).limit(30).all()
+    cierres = q.order_by(CierreCaja.fecha_cierre.desc()).limit(30).all()
+    return [{
+        "id":                  c.id,
+        "tienda_id":           c.tienda_id,
+        "cajero":              c.cajero,
+        "fecha_apertura":      c.fecha_apertura.isoformat() if c.fecha_apertura else None,
+        "fecha_cierre":        c.fecha_cierre.isoformat() if c.fecha_cierre else None,
+        "fondo_inicial":       c.fondo_inicial,
+        "total_efectivo":      c.total_efectivo,
+        "total_tarjeta":       c.total_tarjeta,
+        "total_transferencia": c.total_transferencia,
+        "total_ventas":        c.total_ventas,
+        "efectivo_contado":    c.efectivo_contado,
+        "diferencia":          c.diferencia,
+        "tickets":             c.tickets,
+    } for c in cierres]
 
 
 # ══════════════════════════════════════

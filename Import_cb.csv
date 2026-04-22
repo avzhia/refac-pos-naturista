@@ -1,0 +1,81 @@
+nombre,marca,categoria,precio,stock_minimo,codigo_barras,url_ecommerce
+Ajolo Miel,,Jarabes,45,3,,https://www.tiendanaturistamx.com/productos/jarabe-ajolo-miel-reforzado-con-equinacea-y-propoleo-240-ml/
+Ashwagandha,Natural Yazmin,Vitalidad,175,3,7502010000000,https://www.tiendanaturistamx.com/productos/ashwagandha-natural-yazmin-120-capsulas-de-500-mg-suplemento-antiestres-y-energetico/
+Pal Sin Stress Jarabe,,Relajacion,85,3,7502010000000,https://www.tiendanaturistamx.com/productos/pal-sin-stress-solucion-suplemento-natural-antiestres-220-ml/
+Citrato de Magnesio,Joy Natura,VIT y MIN,160,3,7503040000000,https://www.tiendanaturistamx.com/productos/citrato-de-magnesio-joy-natura-60-capsulas-de-500-mg-alta-biodisponibilidad/
+Citrato de Magnesio,Ultra Soya,VIT y MIN,190,3,1520000000000,https://www.tiendanaturistamx.com/productos/citrato-de-magnesio-suplemento-alimenticio-para-salud-muscular-e-intestinal-100-tabletas-de-480-mg/
+Citrato de Magnesio y Potasio ,Joy Natura,VIT y MIN,195,3,7503040000000,https://www.tiendanaturistamx.com/productos/citrato-de-magnesio-y-potasio-joy-natura-suplemento-alimenticio-60-capsulas-de-500-mg/
+Citrato de Potasio,Joy Natura,VIT y MIN,165,3,7503040000000,https://www.tiendanaturistamx.com/productos/citrato-de-potasio-joy-natura-suplemento-alimenticio-con-alta-biodisponibilidad-60-capsulas-de-500-mg/
+Omega 3 de Salmon,Vidanat,Corazon,240,3,7501060000000,https://www.tiendanaturistamx.com/productos/omega-3-de-salmon-vidanat-acidos-grasos-epa-y-dha-60-capsulas/
+Omega 3,Vidanat,Corazon,190,3,7501060000000,https://www.tiendanaturistamx.com/productos/omega-3-vidanat-suplemento-alimenticio-con-acidos-grasos-esenciales-60-capsulas/
+Promega 3,Progela,Corazon,240,3,7503010000000,https://www.tiendanaturistamx.com/productos/promega-3-suplemento-de-omega-3-con-epa-y-dha-60-capsulas-de-1221-mg/
+Revitare Tocofersolan,,Antioxidantes,135,3,7502230000000,https://www.tiendanaturistamx.com/productos/revitare-vitamina-e-tocofersolan-suplemento-antioxidante-de-alta-absorcion-90-capsulas-de-400-mg/
+Citrato de Magnesio,Pronacen,VIT y MIN,180,3,7503000000000,https://www.tiendanaturistamx.com/productos/citrato-de-magnesio-pronacen-suplemento-alimenticio-200-mg-90-tabletas/
+Citrato de Potasio,Pronacen,VIT y MIN,180,3,7503000000000,https://www.tiendanaturistamx.com/productos/citrato-de-potasio-pronacen-suplemento-alimenticio-para-el-equilibrio-electrolitico-90-tabletas-de-860-mg/
+Arandano,Schuler,Antioxidantes,103,3,631758000000,https://www.tiendanaturistamx.com/productos/schuler-arandano-suplemento-con-extracto-de-arandano-vitamina-c-y-e-60-tabletas/
+Calendula,Matizando,Piel,52,3,7502210000000,https://www.tiendanaturistamx.com/productos/locion-de-calendula-matizando-style-ideal-para-heridas-acne-quemaduras-y-picaduras-140-ml/
+Curcumina Plus,Margarita Nat,Articulaciones,190,3,7503000000000,https://www.tiendanaturistamx.com/productos/curcumina-plus-margarita-naturalmente-suplemento-de-curcuma-con-pimienta-negra-90-capsulas-de-800-mg/
+Curcuyin,Lemon Coachella,Articulaciones,200,3,7503040000000,https://www.tiendanaturistamx.com/productos/curcuyin-curcuma-100-suplemento-antiinflamatorio-natural-30-tabletas-de-860-mg/
+Maca Black,Bella Natural,Vitalidad,139,3,,https://www.tiendanaturistamx.com/productos/triple-maca-black-maca-negra-ginseng-jalea-real-y-tongkat-ali-60-capsulas/
+PullBron,,Jarabes,69,3,7503010000000,https://www.tiendanaturistamx.com/productos/jarabe-pullbron-suplemento-natural-para-vias-respiratorias-con-sauco-eucalipto-limon-y-vitamina-c-240-ml/
+Resveratrol,Kukamonga,Antioxidantes,215,3,7508300000000,https://www.tiendanaturistamx.com/productos/resveratrol-kukamonga-suplemento-antioxidante-natural-60-capsulas-de-250-mg/
+RM Flex,,Articulaciones,196,3,7508300000000,https://www.tiendanaturistamx.com/productos/rmflex-suplemento-natural-para-articulaciones-y-circulacion-30-comprimidos-de-850-mg/
+RocaVIT Platinum,Vitae,VIT y MIN,215,3,7502230000000,https://www.tiendanaturistamx.com/productos/rocavit-platinum-vitae-multivitaminico-con-omega-3-6-9-ginseng-ginkgo-y-jalea-real-30-capsulas/
+Super Tiamina,Laboratorios Ancalmo,Vitalidad,225,3,765446000000,https://www.tiendanaturistamx.com/productos/super-tiamina-300-ancalmo-tiamina-con-cafeina-para-reanimar-y-combatir-el-cansancio-100-tabletas/
+Vitamina E ,NutriDeli,VIT y MIN,153,3,97500848027,https://www.tiendanaturistamx.com/productos/vitamina-e-con-jalea-real-nutri-deli-100-iu-de-d-alpha-tocoferol-50-mg-de-jalea-real-90-capsulas/
+Resveratrol,GreenSide,Antioxidantes,234,3,33119253067,https://www.tiendanaturistamx.com/productos/resveratrol-greenside-30-capsulas-de-350-mg-antioxidante-natural/
+Coplefor B,CMD,VIT y MIN,108,3,7501590000000,https://www.tiendanaturistamx.com/productos/coplefor-b-vitaminas-del-complejo-b-con-omega-3-6-y-9-50-capsulas/
+Alga Spirulina,Pronat,VIT y MIN,240,3,7501060000000,https://www.tiendanaturistamx.com/productos/alga-spirulina-pronat-suplemento-nutricional-rico-en-proteinas-clorofila-y-vitaminas-180-tabletas/
+Silimarino,Yazmin,Desintoxicacion,113,3,,https://www.tiendanaturistamx.com/productos/silimarino-natural-yazmin-detox-hepatico-con-cardo-mariano-y-boldo-60-capsulas/
+Power Man Premium,,Vitalidad,49,3,,https://www.tiendanaturistamx.com/productos/powerman-premium-suplemento-vigorizante-extremo-de-origen-natural-1-tableta/
+Power Man,,Vitalidad,142,3,,https://www.tiendanaturistamx.com/productos/power-man-original-vigor-masculino-natural-4-tabletas-de-500-mg/
+Gliser 9 Estreñimiento,Gliser,Digestion,155,3,,https://www.tiendanaturistamx.com/productos/gliser-9-auxiliar-en-el-tratamiento-del-estrenimiento-150-tabletas-homeopaticas/
+Biotina ,Maxima Nutricion,VIT y MIN,160,3,7503030000000,https://www.tiendanaturistamx.com/productos/biotina-10000-mcg-suplemento-para-el-cabello-piel-y-unas-100-tabletas/
+Gentilax,Dr. Montfort,Digestion,148,3,,https://www.tiendanaturistamx.com/productos/gentilax-laxante-con-60-mg-de-fenolftaleina-alivio-para-el-estrenimiento-ocasional/
+Pulmobrox,Natures Pet,Jarabes,165,3,619114000000,https://www.tiendanaturistamx.com/productos/pulmobrox-nat-jarabe-con-miel-propoleo-gordolobo-vitamina-c-y-eucalipto-240-ml/
+Vital Fuerte,Vital Fuerte,VIT y MIN,205,3,675873000000,https://www.tiendanaturistamx.com/productos/vital-fuerte-multivitaminico-con-vitaminas-y-minerales-antioxidante-100-capsulas/
+Melena de Leon,Naturalhealth,Neuro,180,3,7501850000000,https://www.tiendanaturistamx.com/productos/melena-de-leon-natural-health-suplemento-con-hericium-erinaceus-60-capsulas-de-500-mg/
+Artri King,,Articulaciones,150,3,7501030000000,https://www.tiendanaturistamx.com/productos/artri-king-glucosamina-condroitina-omega3-100-tabletas/
+FF Flex,Ypenza,Articulaciones,126,3,7502210000000,https://www.tiendanaturistamx.com/productos/ff-flex-ypenzza-suplemento-con-glucosamina-condroitina-acido-hialuronico-y-msm-30-tabletas/
+L-Glutamina,High Power,Suplementos,280,3,,https://www.tiendanaturistamx.com/productos/l-glutamina-high-power-suplemento-alimenticio-para-musculo-y-recuperacion-100-capsulas/
+Creatina,High Power,Suplementos,220,3,7501060000000,https://www.tiendanaturistamx.com/productos/creatina-high-power-suplemento-de-creatina-monohidratada-para-energia-y-desempeno-90-capsulas/
+3 Magnesios ,Vidanat,VIT y MIN,170,3,7501060000000,https://www.tiendanaturistamx.com/productos/3-magnesios-vidanat-citrato-cloruro-y-glicinato-de-magnesio-60-tabletas/
+Acido Hialuronico ,Vidanat,Articulaciones,140,3,7501060000000,https://www.tiendanaturistamx.com/productos/acido-hialuronico-vidanat-suplemento-con-colageno-y-acido-hialuronico-30-tabletas/
+Alga Spirulina ,Vidanat,VIT y MIN,165,3,7501060000000,https://www.tiendanaturistamx.com/productos/alga-spirulina-vidanat-suplemento-natural-de-alga-spirulina-en-tabletas-200-tabletas/
+Colageno Hidrolizado ,Vidanat,Articulaciones,160,3,,https://www.tiendanaturistamx.com/productos/colageno-hidrolizado-vidanat-con-vitamina-c-120-tabletas/
+Colageno TIpo II ,Vidanat,Articulaciones,245,3,7501060000000,https://www.tiendanaturistamx.com/productos/colageno-tipo-ii-con-acido-hialuronico-y-citrato-de-magnesio-vidanat-30-capsulas/
+Vitamina C ,Vidanat,VIT y MIN,125,3,,https://www.tiendanaturistamx.com/productos/vitamina-c-1000-mg-en-tabletas-suplemento-antioxidante-natural/
+Vitamina E 1000 ,Vidanat,VIT y MIN,135,3,7501060000000,https://www.tiendanaturistamx.com/productos/vitamina-e-1000-ui-con-aceite-de-germen-de-trigo-vidanat-30-capsulas/
+Vitamina D3 ,Vidanat,VIT y MIN,120,3,7501060000000,https://www.tiendanaturistamx.com/productos/vitamina-d3-5-mcg-suplemento-alimenticio-natural-vidanat/
+Zinc ,Vidanat,VIT y MIN,116,3,7501060000000,https://www.tiendanaturistamx.com/productos/zinc-20-mg-suplemento-alimenticio-para-el-sistema-inmunologico-vidanat/
+Ortiga ,Vidanat,Articulaciones,150,3,7501060000000,https://www.tiendanaturistamx.com/productos/ortiga-250-mg-suplemento-alimenticio-natural-vidanat/
+Carbon Activado Vegetal ,Vidanat,Desintoxicacion,165,3,7501060000000,https://www.tiendanaturistamx.com/productos/carbon-activado-vegetal-vidanat-detox-natural-en-capsulas/
+Acido Alfa Lipoico ,Vidanat,Antioxidantes,275,3,7501060000000,https://www.tiendanaturistamx.com/productos/acido-alfa-lipoico-con-resveratrol-y-extracto-de-uva-60-capsulas-vidanat/
+Vitamina C - Equinacea - Jengibre y Zinc ,Vidanat,VIT y MIN,165,3,7501060000000,https://www.tiendanaturistamx.com/productos/vitamina-c-equinacea-jengibre-zinc-suplemento-alimenticio-vidanat/
+Papaina y Bromelina ,Vidanat,Digestion,95,3,7501060000000,https://www.tiendanaturistamx.com/productos/papaina-y-bromelina-23-mg-suplemento-digestivo-natural-vidanat/
+Aceite de oregano,SIOUX,Imunologico,124,3,,
+Aceite de oregano,Lorenzana,Imunologico,73,3,,
+Aceite de Primula ,Vidanat,Piel,155,3,7501060000000,
+Ajo con perejil ,Vidanat,Corazon,155,3,7501060000000,
+Pre-Pro Bioticos ,Vidanat,Digestion,150,3,7501060000000,
+Vinagre de Manzana ,Vidanat,Desintoxicacion,131,3,7501060000000,
+Complejo B ,Tamilgentrin,VIT y MIN,120,3,7503010000000,
+Jarabe TKita Estres ,Dina,Relajacion,73,3,7502610000000,
+Melatonina ,Kukamonga,Relajacion,160,3,7508300000000,
+Resveratrol Te verde y semilla de uva ,Vidanat,Antioxidantes,131,3,7501060000000,
+Retinol Vitamina A,Natural Feel,VIT y MIN,128,3,,
+Vitamina D3K2 ,Navit,VIT y MIN,125,3,7502300000000,
+BioTin 5000 MCG ,Prettan,VIT y MIN,124,3,,
+Alumbre ,AZULE,Piel,62,3,,
+Arbol de te ,Productos del Roble,Piel,125,3,,
+Colagener ,BIOMIRAL,Articulaciones,117,3,7503180000000,
+Colageno ,Norwegian Labs,Piel,69,3,,
+E Avocado ,Health Pro,VIT y MIN,133,3,741360000000,
+E Squalane ,Health Pro,VIT y MIN,133,3,741360000000,
+Vitamina E ,Norwegian Labs,Piel,69,3,,
+Inulina ,Pasiguaro,Digestion,50,2,7502270000000,
+E Aloe Vera,Health Pro,VIT y MIN,133,3,741360000000,
+Berberina ,Vidanat,Desintoxicacion,207,3,7501060000000,
+Enzimas digestivas PLUS,,Digestion,113,3,6758730000000,
+Acido Hialuronico,Norwegian Labs,Piel,71,3,,
+Calendula,Natural Flowe,Piel,32,3,7501379205155,

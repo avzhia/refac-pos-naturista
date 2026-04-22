@@ -90,10 +90,18 @@ function _renderGrid() {
     const st  = stockTotal(p);
     const cls = st === 0 ? 'out-stock' : st <= (p.stock_min || 5) ? 'low-stock' : '';
     const lbl = st === 0 ? 'Agotado' : st <= (p.stock_min || 5) ? `⚠ Solo ${st}` : `${st} en stock`;
+    const marcaHtml = p.marca && p.marca !== 'Genérico'
+      ? `<div class="prod-marca">${p.marca}</div>`
+      : '';
+    const linkHtml = p.url_ecommerce
+      ? `<a class="prod-ec-link" href="${p.url_ecommerce}" target="_blank" title="Ver en tienda online" onclick="event.stopPropagation()">🔗</a>`
+      : '';
     return `
       <div class="prod-card ${cls}" data-prod-id="${p.id}">
+        ${linkHtml}
         <span class="prod-icon">${p.icono || '🌿'}</span>
         <div class="prod-name">${p.nombre}</div>
+        ${marcaHtml}
         <div class="prod-price">${mxPesos(p.precio)}</div>
         <div class="prod-stock-lbl">${lbl}</div>
       </div>
@@ -397,7 +405,7 @@ function _procesarScan(codigo) {
 
 function _initScanner() {
   document.addEventListener('keydown', e => {
-    if (!document.getElementById('v-prod-grid')) return;
+    if (!document.getElementById('panel-ventas')?.classList.contains('active')) return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 

@@ -103,6 +103,16 @@
 .lb:hover { background: var(--g7); }
 .lb.danger { color: var(--red-txt); border-color: var(--red-bd); }
 .lb.danger:hover { background: var(--red-bg); }
+.ec-btn-inv {
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border2); border-radius: 5px;
+  background: #fff; color: var(--txt3);
+  font-size: 13px; text-decoration: none;
+  cursor: pointer; transition: background .12s, color .12s;
+  vertical-align: middle;
+}
+.ec-btn-inv:hover { background: var(--g7); color: var(--g2); }
 
 /* ── CARDS ── */
 .card {
@@ -277,6 +287,7 @@
   cursor: pointer;
   transition: all .12s;
   text-align: center;
+  position: relative;
 }
 .prod-card:hover { border-color: var(--g4); box-shadow: 0 0 0 2px var(--g7); }
 .prod-card:active { transform: scale(.97); }
@@ -286,6 +297,17 @@
 .prod-name  { font-size: 11px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; }
 .prod-price { font-size: 13px; font-weight: 500; color: var(--g2); }
 .prod-stock-lbl { font-size: 10px; color: var(--txt3); margin-top: 2px; }
+.prod-marca { font-size: 10px; color: var(--txt3); margin-bottom: 2px; }
+.prod-ec-link {
+  position: absolute; bottom: 5px; right: 5px;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--border2);
+  text-decoration: none; border-radius: 4px;
+  transition: color .15s, background .12s;
+  z-index: 2;
+}
+.prod-ec-link:hover { background: var(--g7); color: var(--g2); }
 
 /* Ticket (v-right) */
 .caja-header { padding: 13px 15px 9px; border-bottom: 1px solid var(--border); }
@@ -707,3 +729,31 @@
 .inv-cell-prod { display: flex; align-items: center; gap: 7px; padding: 9px 11px; }
 .inv-cell-acc  { display: flex; align-items: center; gap: 5px; padding: 6px 11px; }
 .inv-main-cells.expanded .expand-icon { transform: rotate(90deg); }
+
+/* ── Exportar dropdown inventario ─────────────────────────────────────────── */
+.inv-export-wrap {
+  position: relative;
+  display: inline-block;
+}
+.inv-export-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  z-index: 200;
+  min-width: 160px;
+  margin-top: 4px;
+}
+.inv-export-menu.open { display: block; }
+.inv-export-opt {
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.inv-export-opt:last-child { border-bottom: none; }
+.inv-export-opt:hover { background: var(--g7); }

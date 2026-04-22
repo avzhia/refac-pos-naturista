@@ -120,7 +120,7 @@ export function irASilencioso(modulo) {
 // ── Logo y nombre del negocio ─────────────────────────────────────────────────
 
 export function actualizarLogo() {
-  const url = `${API.BASE}/logo.png?t=${Date.now()}`;
+  const url = `${API.BASE}/static/logo.png?t=${Date.now()}`;
   const imgs = ['header-logo-img', 'login-logo-img', 'login-logo-img2', 'admin-logo-preview'];
 
   // Header y login
@@ -131,16 +131,19 @@ export function actualizarLogo() {
     tester.onload = () => {
       img.src = url;
       img.style.display = 'inline-block';
-      const emoji = document.getElementById(id.replace('-img', '-emoji').replace('header-logo', 'header-logo'));
-      if (emoji) emoji.style.display = 'none';
+      const emojiId = id === 'header-logo-img' ? 'header-logo-emoji'
+        : id === 'login-logo-img'  ? 'login-logo-emoji'
+        : 'login-logo-emoji2';
+      const emojiEl = document.getElementById(emojiId + '-icon');
+      if (emojiEl) emojiEl.style.display = 'none';
     };
     tester.onerror = () => {
       img.style.display = 'none';
       const emojiId = id === 'header-logo-img' ? 'header-logo-emoji'
         : id === 'login-logo-img'  ? 'login-logo-emoji'
         : 'login-logo-emoji2';
-      const emoji = document.getElementById(emojiId);
-      if (emoji) emoji.style.display = '';
+      const emojiEl = document.getElementById(emojiId + '-icon');
+      if (emojiEl) emojiEl.style.display = '';
     };
     tester.src = url;
   });
@@ -165,11 +168,11 @@ export function actualizarNombreNegocio(nombre) {
   // Header topbar
   const headerEl = document.getElementById('header-negocio');
   if (headerEl) headerEl.textContent = nombre;
-  // Login — el nombre aparece junto al emoji en .login-logo
-  ['login-logo-emoji', 'login-logo-emoji2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = `🌿 ${nombre}`;
-  });
+  // Login — actualizar solo el span del nombre, no el emoji
+  const n1 = document.getElementById('login-logo-name');
+  if (n1) n1.textContent = nombre;
+  const n2 = document.getElementById('login-logo-name2');
+  if (n2) n2.textContent = nombre;
   document.title = `${nombre} POS`;
 }
 

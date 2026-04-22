@@ -16,6 +16,7 @@ const _s = {
   editProdId:    null,
   editLoteId:    null,
   editLoteProdId: null,
+  listaFiltrada: [],
 };
 
 // ── Helpers de fecha / stock ──────────────────────────────────────────────────
@@ -114,8 +115,9 @@ function _set(id, val) {
 // ── Filtros ───────────────────────────────────────────────────────────────────
 
 function _poblarFiltros() {
-  const selCat  = document.getElementById('inv-filt-cat');
-  const selProv = document.getElementById('inv-filt-prov');
+  const selCat   = document.getElementById('inv-filt-cat');
+  const selProv  = document.getElementById('inv-filt-prov');
+  const selMarca = document.getElementById('inv-filt-marca');
   if (selCat) {
     selCat.innerHTML = '<option value="">Todas las categorías</option>' +
       _s.categorias.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
@@ -124,17 +126,35 @@ function _poblarFiltros() {
     selProv.innerHTML = '<option value="">Todos los proveedores</option>' +
       _s.proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
   }
+  if (selMarca) {
+    const marcas = [...new Set(
+      (_s.productos || []).map(p => p.marca).filter(m => m && m !== 'Genérico')
+    )].sort();
+    const haySinMarca = (_s.productos || []).some(p => !p.marca || p.marca === 'Genérico');
+    selMarca.innerHTML = '<option value="">Todas las marcas</option>' +
+      marcas.map(m => `<option value="${m}">${m}</option>`).join('') +
+      (haySinMarca ? '<option value="Genérico">Sin marca</option>' : '');
+  }
 }
 
 function render() {
-  const q       = document.getElementById('inv-search-input')?.value?.toLowerCase() ?? '';
-  const catFilt = document.getElementById('inv-filt-cat')?.value ?? '';
-  const estFilt = document.getElementById('inv-filt-est')?.value ?? '';
+  const q        = document.getElementById('inv-search-input')?.value?.toLowerCase() ?? '';
+  const catFilt  = document.getElementById('inv-filt-cat')?.value ?? '';
+  const estFilt  = document.getElementById('inv-filt-est')?.value ?? '';
   const provFilt = document.getElementById('inv-filt-prov')?.value ?? '';
+  const marcFilt = document.getElementById('inv-filt-marca')?.value ?? '';
 
   const lista = _s.productos.filter(p => {
-    if (q && !p.nombre.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q)) return false;
+    if (q) {
+      const enNombre    = p.nombre.toLowerCase().includes(q);
+      const enCategoria = p.categoria.toLowerCase().includes(q);
+      const enMarca     = (p.marca||'').toLowerCase().includes(q);
+      const enBarcode   = (p.codigo_barras||'').includes(q);
+      const enProveedor = (p.lotes||[]).some(l => (l.proveedor_nombre||'').toLowerCase().includes(q));
+      if (!enNombre && !enCategoria && !enMarca && !enBarcode && !enProveedor) return false;
+    }
     if (catFilt && p.categoria !== catFilt) return false;
+    if (marcFilt && (p.marca || 'Genérico') !== marcFilt) return false;
     if (provFilt) {
       const tieneP = (p.lotes||[]).some(l => l.proveedor_nombre === provFilt);
       if (!tieneP) return false;
@@ -153,6 +173,7 @@ function render() {
     return true;
   });
 
+  _s.listaFiltrada = lista;
   _renderTabla(lista);
 }
 
@@ -231,8 +252,14 @@ function _renderFilaProd(p) {
         <div class="inv-cell-prod">
           <span class="expand-icon" style="font-size:11px;color:var(--txt3);transition:transform .15s;">▶</span>
           <span style="font-size:15px;">${p.icono||'🌿'}</span>
-          <span style="font-size:13px;font-weight:500;">${p.nombre}</span>
-          <span style="font-size:11px;color:var(--txt3);margin-left:4px;">${lotesNodev.length} lote(s)</span>
+          <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:13px;font-weight:500;">${p.nombre}</span>
+              ${p.marca && p.marca !== 'Genérico' ? `<span style="font-size:11px;color:var(--txt3);">${p.marca}</span>` : ''}
+              <span style="font-size:12px;font-weight:600;color:var(--g2);">$${p.precio?.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+              <span style="font-size:11px;color:var(--txt3);">${lotesNodev.length} lote(s)</span>
+            </div>
+          </div>
         </div>
         <div class="inv-cell"><span class="prod-cat-chip">${p.categoria}</span></div>
         <div class="inv-cell">
@@ -247,6 +274,7 @@ function _renderFilaProd(p) {
           <button class="lb" data-action="add-lote" data-id="${p.id}">+ Lote</button>
           <button class="lb" data-action="edit-prod" data-id="${p.id}">Editar</button>
           <button class="lb danger" data-action="del-prod" data-id="${p.id}">✕</button>
+          ${p.url_ecommerce ? `<a class="lb ec-btn-inv" href="${p.url_ecommerce}" target="_blank" title="Ver en tienda online" onclick="event.stopPropagation()">🔗</a>` : ''}
         </div>
       </div>
       <div class="lotes-panel" id="lotes-${p.id}">
@@ -292,45 +320,107 @@ function _toggleLotes(row, prodId) {
 
 // ── Catálogo de iconos naturistas ────────────────────────────────────────────
 
-const ICONOS_NATURISTA = [
+// ── Íconos — lista con metadatos de búsqueda ─────────────────────────────────
+const ICONOS_DATA = [
   // Plantas y hierbas
-  '🌿','🌱','🍃','🌾','🪴','🌲','🌳','🌵',
+  { ic:'🌿', t:'planta hierba natural verde hoja' },
+  { ic:'🌱', t:'brote semilla planta nueva' },
+  { ic:'🍃', t:'hoja planta verde natural' },
+  { ic:'🌾', t:'trigo cereal grano semilla' },
+  { ic:'🪴', t:'planta maceta interior' },
+  { ic:'🌲', t:'árbol pino conífero' },
+  { ic:'🌳', t:'árbol natural bosque' },
+  { ic:'🌵', t:'cactus nopal suculenta' },
+  { ic:'🍄', t:'hongo seta champiñón fungi' },
+  { ic:'🪨', t:'mineral piedra roca sal' },
+  { ic:'🌻', t:'girasol flor semilla aceite' },
+  { ic:'🌸', t:'flor cereza rosa belleza' },
+  { ic:'🌺', t:'flor hibisco belleza piel' },
+  { ic:'🪷', t:'loto flor belleza spa' },
   // Tés e infusiones
-  '🍵','☕','🫖','🧉','🫙',
-  // Frutas y semillas
-  '🍋','🍊','🍇','🫐','🍓','🥝','🍎','🍏',
-  '🥑','🫒','🌰','🥜','🫘',
-  // Especias y condimentos
-  '🧄','🧅','🫚','🌶️','🫛','🌿',
+  { ic:'🍵', t:'té infusión verde matcha' },
+  { ic:'☕', t:'café té caliente taza' },
+  { ic:'🫖', t:'tetera infusión té herbal' },
+  { ic:'🧉', t:'mate infusión hierba' },
+  { ic:'🫙', t:'frasco tarro conserva suplemento' },
+  // Frutas, semillas y vegetales
+  { ic:'🍋', t:'limón cítrico vitamina c' },
+  { ic:'🍊', t:'naranja cítrico vitamina c' },
+  { ic:'🍇', t:'uva antioxidante resveratrol' },
+  { ic:'🫐', t:'arándano antioxidante berry' },
+  { ic:'🍓', t:'fresa berry antioxidante' },
+  { ic:'🥝', t:'kiwi vitamina c fruta' },
+  { ic:'🍎', t:'manzana fruta fibra' },
+  { ic:'🍏', t:'manzana verde fruta' },
+  { ic:'🥑', t:'aguacate avocado omega grasa' },
+  { ic:'🫒', t:'aceituna oliva aceite omega' },
+  { ic:'🌰', t:'castaña nuez semilla' },
+  { ic:'🥜', t:'cacahuate maní proteína nuez' },
+  { ic:'🫘', t:'frijol legumbre proteína' },
+  { ic:'🥥', t:'coco aceite coco grasa mct' },
+  { ic:'🍯', t:'miel endulzante natural' },
+  { ic:'🧄', t:'ajo allicina antibiótico' },
+  { ic:'🧅', t:'cebolla allium antibiótico' },
+  { ic:'🌶️', t:'chile capsaicina picante' },
+  { ic:'🫛', t:'chícharo guisante legumbre' },
   // Suplementos y vitaminas
-  '💊','🧴','💉','🩺','⚗️','🔬','🧪',
+  { ic:'💊', t:'cápsula pastilla vitamina suplemento' },
+  { ic:'🧴', t:'frasco suplemento líquido crema' },
+  { ic:'💉', t:'inyectable ampolleta vitamina' },
+  { ic:'⚗️', t:'extracto concentrado laboratorio' },
+  { ic:'🔬', t:'investigación científico laboratorio' },
+  { ic:'🧪', t:'fórmula extracto laboratorio' },
+  { ic:'🫗', t:'líquido jarabe extracto' },
+  { ic:'🧃', t:'jugo extracto bebida' },
   // Energía y rendimiento
-  '⚡','🔋','💪','🏃','🧬','🫀',
+  { ic:'⚡', t:'energía vitalidad rendimiento' },
+  { ic:'🔋', t:'energía batería resistencia' },
+  { ic:'💪', t:'músculo fuerza proteína rendimiento' },
+  { ic:'🏃', t:'deporte ejercicio rendimiento' },
+  { ic:'🧬', t:'genética adn celular' },
+  { ic:'🫀', t:'corazón cardio circulación' },
   // Salud por sistema
-  '🧠','❤️','🫁','🦴','🦷','👁️','🩻',
+  { ic:'🧠', t:'cerebro cognitivo memoria nootropico' },
+  { ic:'❤️', t:'corazón amor cardio' },
+  { ic:'🫁', t:'pulmón respiratorio bronquios' },
+  { ic:'🦴', t:'hueso calcio articulación' },
+  { ic:'🦷', t:'diente dental calcio' },
+  { ic:'👁️', t:'ojo visión luteína' },
+  { ic:'🩻', t:'hueso articulación rayos' },
   // Piel y belleza
-  '✨','🌸','🌺','💆','🧖','🪷',
-  // Aceites y extractos
-  '💧','🫗','🧃','🍯','🫧',
-  // Endulzantes
-  '🍯','🧁','🌻',
-  // Jarabe / líquidos
-  '🧴','💊','🫙','⚗️',
+  { ic:'✨', t:'brillo piel belleza luminosidad' },
+  { ic:'💆', t:'relajación masaje bienestar' },
+  { ic:'🧖', t:'spa cuidado piel facial' },
+  // Aceites
+  { ic:'💧', t:'agua hidratación líquido' },
+  { ic:'🫧', t:'espuma limpieza jabón' },
   // Bienestar general
-  '😴','🧘','🏋️','🌞','🌙','⭐','🌈',
+  { ic:'😴', t:'sueño descanso relajación melatonina' },
+  { ic:'🧘', t:'yoga meditación bienestar relajación' },
+  { ic:'🏋️', t:'pesas gimnasio proteína deportivo' },
+  { ic:'🌞', t:'sol vitamina d energía' },
+  { ic:'🌙', t:'noche sueño melatonina descanso' },
+  { ic:'⭐', t:'estrella calidad premium' },
+  { ic:'🌈', t:'multinutriente multivitamínico' },
+  { ic:'🫚', t:'aceite extracto omega grasas' },
+  { ic:'🧁', t:'endulzante dulce azúcar natural' },
 ];
 
-// Eliminar duplicados manteniendo orden
-const ICONOS = [...new Set(ICONOS_NATURISTA)];
-
 function _renderIconGrid(inputId) {
-  const grid  = document.getElementById('inv-icon-grid');
-  const input = document.getElementById(inputId);
+  const panel  = document.getElementById('inv-icon-panel');
+  const grid   = document.getElementById('inv-icon-grid');
+  const input  = document.getElementById(inputId);
+  const search = document.getElementById('inv-icon-search');
   if (!grid || !input) return;
 
-  grid.innerHTML = ICONOS.map(ic => `
-    <div class="icon-opt ${input.value === ic ? 'sel' : ''}"
-      data-ic="${ic}" title="${ic}">${ic}</div>
+  const q = search ? search.value.toLowerCase().trim() : '';
+  const lista = q
+    ? ICONOS_DATA.filter(d => d.t.includes(q) || d.ic === q)
+    : ICONOS_DATA;
+
+  grid.innerHTML = lista.map(d => `
+    <div class="icon-opt ${input.value === d.ic ? 'sel' : ''}"
+      data-ic="${d.ic}" title="${d.t}">${d.ic}</div>
   `).join('');
 
   grid.querySelectorAll('.icon-opt').forEach(el => {
@@ -338,8 +428,31 @@ function _renderIconGrid(inputId) {
       input.value = el.dataset.ic;
       grid.querySelectorAll('.icon-opt').forEach(x => x.classList.remove('sel'));
       el.classList.add('sel');
+      // Cerrar panel al seleccionar
+      if (panel) panel.style.display = 'none';
+      const toggle = document.getElementById('inv-icon-toggle');
+      if (toggle) toggle.textContent = 'Elegir ícono ▾';
     });
   });
+}
+
+function _initIconToggle() {
+  const toggle = document.getElementById('inv-icon-toggle');
+  const panel  = document.getElementById('inv-icon-panel');
+  const search = document.getElementById('inv-icon-search');
+  if (!toggle || !panel) return;
+
+  toggle.addEventListener('click', () => {
+    const open = panel.style.display === 'block';
+    panel.style.display = open ? 'none' : 'block';
+    toggle.textContent = open ? 'Elegir ícono ▾' : 'Cerrar ▴';
+    if (!open) {
+      _renderIconGrid('inv-f-icon');
+      search?.focus();
+    }
+  });
+
+  search?.addEventListener('input', () => _renderIconGrid('inv-f-icon'));
 }
 
 // ── Modal Producto ────────────────────────────────────────────────────────────
@@ -368,16 +481,24 @@ async function abrirFormProd(id = null) {
     _val('inv-f-precio',  p.precio);
     _val('inv-f-min',     p.stock_min || 5);
     _val('inv-f-barcode', p.codigo_barras || '');
+    _val('inv-f-marca',   p.marca || '');
+    _val('inv-f-url-ec',  p.url_ecommerce || '');
     if (sel) sel.value = p.categoria;
   } else {
-    _val('inv-f-nombre', '');
-    _val('inv-f-icon',   '🌿');
-    _val('inv-f-precio', '');
-    _val('inv-f-min',    '5');
-    _val('inv-f-barcode','');
+    _val('inv-f-nombre',  '');
+    _val('inv-f-icon',    '🌿');
+    _val('inv-f-precio',  '');
+    _val('inv-f-min',     '5');
+    _val('inv-f-barcode', '');
+    _val('inv-f-marca',   '');
+    _val('inv-f-url-ec',  '');
   }
+  // Cerrar panel de íconos al abrir modal
+  const iconPanel = document.getElementById('inv-icon-panel');
+  const iconToggle = document.getElementById('inv-icon-toggle');
+  if (iconPanel) iconPanel.style.display = 'none';
+  if (iconToggle) iconToggle.textContent = 'Elegir ícono ▾';
   document.getElementById('modal-prod').classList.add('open');
-  _renderIconGrid('inv-f-icon');
 }
 
 async function guardarProd() {
@@ -387,13 +508,15 @@ async function guardarProd() {
   const precioStr = document.getElementById('inv-f-precio')?.value ?? '';
   const precio  = parseFloat(precioStr);
   const min     = parseInt(document.getElementById('inv-f-min')?.value ?? '5') || 5;
-  const barcode = document.getElementById('inv-f-barcode')?.value?.trim() || null;
+  const barcode  = document.getElementById('inv-f-barcode')?.value?.trim() || null;
+  const marca    = document.getElementById('inv-f-marca')?.value?.trim() || 'Genérico';
+  const urlEc    = document.getElementById('inv-f-url-ec')?.value?.trim() || null;
 
   if (!nombre)               { showNotif('⚠ Ingresa el nombre del producto'); return; }
   if (!cat)                  { showNotif('⚠ Selecciona una categoría'); return; }
   if (!precioStr || isNaN(precio) || precio < 0) { showNotif('⚠ Ingresa un precio válido'); return; }
 
-  const data = { nombre, categoria: cat, icono, precio, stock_min: min, codigo_barras: barcode };
+  const data = { nombre, categoria: cat, icono, precio, stock_min: min, codigo_barras: barcode, marca, url_ecommerce: urlEc };
   try {
     if (_s.editProdId) await API.editarProducto(_s.editProdId, data);
     else               await API.crearProducto(data);
@@ -758,8 +881,10 @@ async function procesarCSV(input) {
     else cat = cats.find(c => c.toLowerCase() === cat.toLowerCase());
     const min     = parseInt(row['stock_minimo'] || row['min'] || '5') || 5;
     const barcode = row['codigo_barras'] || row['barcode'] || null;
+    const marca   = row['marca'] || row['brand'] || 'Genérico';
+    const urlEc   = row['url_ecommerce'] || row['url'] || null;
     try {
-      await API.crearProducto({ nombre, categoria: cat, icono: '🌿', precio, stock_min: min, codigo_barras: barcode || null });
+      await API.crearProducto({ nombre, categoria: cat, icono: '🌿', precio, stock_min: min, codigo_barras: barcode || null, marca, url_ecommerce: urlEc || null });
       importados++;
     } catch(e) { errores++; }
   }
@@ -771,41 +896,82 @@ async function procesarCSV(input) {
 
 // ── Exportar CSV ──────────────────────────────────────────────────────────────
 
-function exportarFiltrados() {
-  const q        = document.getElementById('inv-search-input')?.value?.trim() ?? '';
+function exportarPorLote() {
+  const lista = _s.listaFiltrada || [];
+
+  if (!lista.length) {
+    showNotif('⚠ Sin productos con los filtros actuales');
+    return;
+  }
+
   const catFilt  = document.getElementById('inv-filt-cat')?.value  ?? '';
   const estFilt  = document.getElementById('inv-filt-est')?.value  ?? '';
   const provFilt = document.getElementById('inv-filt-prov')?.value ?? '';
 
-  const filas = [['Producto','Categoría','Precio','Stock mín.','Lote','Proveedor','Stock lote','Costo unitario','Fecha entrada','Caducidad','Estado lote']];
+  const filas = [['Producto','Marca','Categoría','Precio','Stock mín.','Lote','Proveedor','Stock lote','Costo unitario','Fecha entrada','Caducidad','Estado lote']];
 
-  _s.productos.forEach(p => {
-    const mQ = !q || p.nombre.toLowerCase().includes(q.toLowerCase());
-    const mC = !catFilt  || p.categoria === catFilt;
-    const mP = !provFilt || (p.lotes||[]).some(l => l.proveedor_nombre === provFilt);
-    if (!mQ || !mC || !mP) return;
-
-    (p.lotes||[]).filter(l => l.numero_lote !== 'DEV').forEach(l => {
-      const dias = l.caduca && l.fecha_caducidad ? diasHastaCaducidad(l.fecha_caducidad) : null;
-      let est = 'Normal';
-      if (dias !== null) { if (dias < 0) est = 'Vencido'; else if (dias <= 30) est = 'Próximo a vencer'; }
-      if (l.stock === 0) est = 'Sin stock';
-
-      if (estFilt === 'out'  && l.stock > 0) return;
-      if (estFilt === 'venc' && !(dias !== null && dias < 0)) return;
-      if (estFilt === 'prox' && !(dias !== null && dias >= 0 && dias <= 30)) return;
-
-      filas.push([
-        p.nombre, p.categoria, p.precio, p.stock_min||5,
-        l.numero_lote, l.proveedor_nombre||'—', l.stock, l.costo_unitario,
-        l.fecha_entrada||'—', l.fecha_caducidad||'—', est,
-      ]);
-    });
+  lista.forEach(p => {
+    const lotesExport = (p.lotes||[]).filter(l => l.numero_lote !== 'DEV');
+    if (lotesExport.length === 0) {
+      // Producto sin lotes — exportar fila con datos del producto
+      filas.push([p.nombre, p.marca||'Genérico', p.categoria, p.precio, p.stock_min||5, '—','—', 0, '—','—','—','Sin stock']);
+    } else {
+      lotesExport.forEach(l => {
+        const dias = l.caduca && l.fecha_caducidad ? diasHastaCaducidad(l.fecha_caducidad) : null;
+        let est = 'Normal';
+        if (dias !== null) { if (dias < 0) est = 'Vencido'; else if (dias <= 30) est = 'Próximo a vencer'; }
+        if (l.stock === 0) est = 'Sin stock';
+        filas.push([
+          p.nombre, p.marca||'Genérico', p.categoria, p.precio, p.stock_min||5,
+          l.numero_lote, l.proveedor_nombre||'—', l.stock, l.costo_unitario,
+          l.fecha_entrada||'—', l.fecha_caducidad||'—', est,
+        ]);
+      });
+    }
   });
 
   const csv   = filas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob  = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const partes = ['inventario'];
+  if (catFilt)  partes.push(catFilt.replace(/\s/g,'_'));
+  if (provFilt) partes.push(provFilt.replace(/\s/g,'_'));
+  if (estFilt)  partes.push(estFilt);
+  partes.push(fechaHoyLocal());
+
+  const a = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = partes.join('_') + '.csv';
+  a.click();
+}
+
+
+function exportarPorProducto() {
+  const lista = _s.listaFiltrada || [];
+  if (!lista.length) { showNotif('⚠ Sin productos con los filtros actuales'); return; }
+
+  const catFilt  = document.getElementById('inv-filt-cat')?.value  ?? '';
+  const estFilt  = document.getElementById('inv-filt-est')?.value  ?? '';
+  const provFilt = document.getElementById('inv-filt-prov')?.value ?? '';
+
+  const filas = [['Producto','Marca','Categoría','Proveedores','Stock total','Stock mín.','Estado']];
+
+  lista.forEach(p => {
+    const st = stockProd(p);
+    const proveedores = [...new Set(
+      (p.lotes||[]).filter(l => l.numero_lote !== 'DEV' && l.proveedor_nombre)
+                   .map(l => l.proveedor_nombre)
+    )].join(', ') || '—';
+
+    let estado = 'En stock';
+    if (st === 0) estado = 'Agotado';
+    else if (st <= (p.stock_min||5)) estado = 'Stock bajo';
+
+    filas.push([p.nombre, p.marca||'Genérico', p.categoria, proveedores, st, p.stock_min||5, estado]);
+  });
+
+  const csv  = filas.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const partes = ['inventario_productos'];
   if (catFilt)  partes.push(catFilt.replace(/\s/g,'_'));
   if (provFilt) partes.push(provFilt.replace(/\s/g,'_'));
   if (estFilt)  partes.push(estFilt);
@@ -833,7 +999,7 @@ function _val(id, val) {
 
 function conectar() {
   // Filtros
-  ['inv-search-input','inv-filt-cat','inv-filt-est','inv-filt-prov'].forEach(id => {
+  ['inv-search-input','inv-filt-cat','inv-filt-est','inv-filt-prov','inv-filt-marca'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  render);
     document.getElementById(id)?.addEventListener('change', render);
   });
@@ -843,11 +1009,58 @@ function conectar() {
   document.getElementById('inv-btn-cats')?.addEventListener('click', abrirModalCats);
   document.getElementById('inv-btn-provs')?.addEventListener('click', abrirModalProvs);
   document.getElementById('inv-btn-import')?.addEventListener('click', abrirImportCSV);
-  document.getElementById('inv-btn-export')?.addEventListener('click', exportarFiltrados);
+
+  // Dropdown exportar
+  const btnExport  = document.getElementById('inv-btn-export');
+  const menuExport = document.getElementById('inv-export-menu');
+  btnExport?.addEventListener('click', e => {
+    e.stopPropagation();
+    menuExport?.classList.toggle('open');
+  });
+  document.addEventListener('click', () => menuExport?.classList.remove('open'));
+  document.getElementById('inv-export-producto')?.addEventListener('click', () => {
+    menuExport?.classList.remove('open');
+    exportarPorProducto();
+  });
+  document.getElementById('inv-export-lote')?.addEventListener('click', () => {
+    menuExport?.classList.remove('open');
+    exportarPorLote();
+  });
   document.getElementById('inv-csv-input')?.addEventListener('change', e => procesarCSV(e.target));
 
   // Modal producto
-  document.getElementById('inv-f-icon')?.addEventListener('input', () => _renderIconGrid('inv-f-icon'));
+  // Ícono — input manual actualiza selección en grid si está abierto
+  document.getElementById('inv-f-icon')?.addEventListener('input', () => {
+    const panel = document.getElementById('inv-icon-panel');
+    if (panel && panel.style.display === 'block') _renderIconGrid('inv-f-icon');
+  });
+  _initIconToggle();
+
+  // Autocompletado de marca
+  const marcaInput = document.getElementById('inv-f-marca');
+  const marcaDd    = document.getElementById('inv-marca-dd');
+  if (marcaInput && marcaDd) {
+    marcaInput.addEventListener('input', () => {
+      const q = marcaInput.value.toLowerCase().trim();
+      // Recolectar marcas únicas de productos actuales
+      const marcas = [...new Set(
+        (_s.productos || []).map(p => p.marca).filter(m => m && m !== 'Genérico')
+      )];
+      const filtradas = q
+        ? marcas.filter(m => m.toLowerCase().includes(q))
+        : marcas;
+      if (!filtradas.length) { marcaDd.style.display = 'none'; return; }
+      marcaDd.innerHTML = filtradas.map(m =>
+        `<div style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
+          onmousedown="event.preventDefault();document.getElementById('inv-f-marca').value='${m.replace(/'/g,"\'")}';document.getElementById('inv-marca-dd').style.display='none';"
+          onmouseover="this.style.background='var(--g8)'" onmouseout="this.style.background=''">${m}</div>`
+      ).join('');
+      marcaDd.style.display = 'block';
+    });
+    marcaInput.addEventListener('blur', () => {
+      setTimeout(() => { marcaDd.style.display = 'none'; }, 200);
+    });
+  }
   document.getElementById('modal-prod-save')?.addEventListener('click', guardarProd);
   document.getElementById('modal-prod-cancel')?.addEventListener('click', cerrarModales);
   document.getElementById('modal-prod')?.addEventListener('click', e => { if (e.target === e.currentTarget) cerrarModales(); });
@@ -893,6 +1106,46 @@ function conectar() {
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', conectar);
+// ── Scanner código de barras en inventario ────────────────────────────────────
+
+const _scan = { buffer: '', timer: null };
+
+function _initScannerInv() {
+  document.addEventListener('keydown', e => {
+    // Solo actúa cuando el panel de inventario está activo
+    if (!document.getElementById('panel-inventario')?.classList.contains('active')) return;
+    // Si el foco está en un input/textarea/select, ignorar
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if (e.key === 'Enter') {
+      if (_scan.buffer.length > 2) {
+        const prod = (_s.productos || []).find(p => p.codigo_barras === _scan.buffer);
+        if (prod) {
+          // Filtrar por id único — no por nombre para evitar ambigüedades
+          _s.listaFiltrada = [prod];
+          _renderTabla([prod]);
+          // Limpiar otros filtros visualmente
+          const input = document.getElementById('inv-search-input');
+          if (input) input.value = '';
+          showNotif(prod.icono + ' ' + prod.nombre + ' — ' + mxPesos(prod.precio));
+        } else {
+          showNotif('⚠ Código no encontrado: ' + _scan.buffer);
+        }
+      }
+      _scan.buffer = '';
+      clearTimeout(_scan.timer);
+      return;
+    }
+
+    if (e.key.length === 1) {
+      _scan.buffer += e.key;
+      clearTimeout(_scan.timer);
+      _scan.timer = setTimeout(() => { _scan.buffer = ''; }, 100);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => { conectar(); _initScannerInv(); });
 
 export default { init, render, cerrarModales, abrirFormProd, abrirModalCats, abrirModalProvs };
