@@ -165,7 +165,7 @@ export function actualizarLogo() {
 export function actualizarNombreNegocio(nombre) {
   if (!nombre) return;
   Estado.config.negocio = nombre;
-  // Header topbar
+  // Header — span del nombre dentro del emoji contenedor
   const headerEl = document.getElementById('header-negocio');
   if (headerEl) headerEl.textContent = nombre;
   // Login — actualizar solo el span del nombre, no el emoji
