@@ -9,10 +9,9 @@ from datetime import date, datetime
 from pydantic import BaseModel
 import os
 
-from database import crear_tablas, get_db, insertar_datos_iniciales, Gasto
-from backup_db import hacer_respaldo
-from database import (Producto, Lote, Cliente, Venta, ItemVenta,
-                      CierreCaja, Tienda, Cajero, Categoria, Devolucion, Merma, Config, Proveedor, Turno)
+from database import (crear_tablas, get_db, insertar_datos_iniciales,
+                      Producto, Lote, Cliente, Venta, ItemVenta,
+                      CierreCaja, Tienda, Cajero, Categoria, Devolucion, Merma, Config, Proveedor, Turno, Gasto)
 import hashlib
 
 app = FastAPI(title="TiendaNaturistaMX POS")
@@ -30,7 +29,7 @@ def startup():
     crear_tablas()
     db = next(get_db())
     insertar_datos_iniciales(db)
-    hacer_respaldo()
+    db.close()
     print("✓ TiendaNaturistaMX POS listo en http://localhost:8000")
 
 app.mount("/static", StaticFiles(directory="../"), name="static")

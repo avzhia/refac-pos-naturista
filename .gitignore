@@ -1,0 +1,25 @@
+# Entorno
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Base de datos SQLite legacy
+backend/pos.db
+backend/respaldos/
+
+# Node / Vue / Vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
