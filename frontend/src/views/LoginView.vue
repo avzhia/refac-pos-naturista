@@ -54,7 +54,6 @@ async function setupAdmin() {
     await api.post('/admin/setup', { password: adminPassword.value, confirm: adminConfirm.value })
     ui.success('Contraseña configurada correctamente')
     await loadTiendas()
-    step.value = 'tienda'
   } catch (e) {
     adminError.value = e.response?.data?.detail || 'Error al configurar'
   } finally {
