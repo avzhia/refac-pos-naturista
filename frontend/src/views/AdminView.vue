@@ -90,6 +90,8 @@ async function subirLogo() {
     form.append('file', logoFile.value)
     await api.post('/admin/logo', form, { headers: { 'Content-Type': 'multipart/form-data' } })
     logoFile.value = null
+    // Forzar recarga del logo desde el servidor con cache-bust
+    logoPreviewUrl.value = '/api/admin/logo?t=' + Date.now()
     ui.success('Logo actualizado')
   } catch {
     ui.error('Error al subir logo')

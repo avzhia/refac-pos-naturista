@@ -1,8 +1,9 @@
 import os
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from database import get_db, Config, Cajero
@@ -11,7 +12,8 @@ from utils import hash_password
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-LOGO_PATH = "../logo.png"
+# Ruta absoluta al logo, relativa a este archivo
+LOGO_PATH = str(Path(__file__).parent.parent.parent / "logo.png")
 
 
 @router.get("/setup-required")
@@ -83,6 +85,13 @@ def descargar_backup():
     if os.path.exists(pg_backup):
         return FR(path=pg_backup, filename=f"pos_backup_{fecha}.sql", media_type="application/octet-stream")
     raise HTTPException(status_code=404, detail="No hay respaldo disponible para hoy")
+
+
+@router.get("/logo")
+def obtener_logo():
+    if not os.path.exists(LOGO_PATH):
+        raise HTTPException(status_code=404, detail="Sin logo")
+    return FileResponse(LOGO_PATH, media_type="image/png")
 
 
 @router.post("/logo")
