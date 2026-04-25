@@ -1,9 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUiStore } from '../stores/ui'
+import { useAuthStore } from '../stores/auth'
 import api from '../api'
 
-const ui = useUiStore()
+const router = useRouter()
+const auth   = useAuthStore()
+const ui     = useUiStore()
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 const autenticado  = ref(false)
@@ -311,7 +315,13 @@ const fmtFecha = iso => {
 
     <!-- ── Panel ─────────────────────────────────────────────────────────────── -->
     <div v-else>
-      <h1 class="text-xl font-bold text-gray-800 mb-5">⚙️ Administración</h1>
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-xl font-bold text-gray-800">⚙️ Administración</h1>
+        <button v-if="!auth.turnoActivo" @click="router.push('/login')"
+          class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          ← Volver al login
+        </button>
+      </div>
 
       <!-- Tabs -->
       <div class="flex gap-1 mb-6 overflow-x-auto pb-1 scrollbar-hide">

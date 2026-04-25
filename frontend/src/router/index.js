@@ -9,7 +9,7 @@ const routes = [
   { path: '/clientes',      component: () => import('../views/ClientesView.vue'),     meta: { requiresAuth: true } },
   { path: '/devoluciones',  component: () => import('../views/DevolucionesView.vue'), meta: { requiresAuth: true } },
   { path: '/reportes',      component: () => import('../views/ReportesView.vue'),     meta: { requiresAuth: true } },
-  { path: '/admin',         component: () => import('../views/AdminView.vue'),        meta: { requiresAuth: true } },
+  { path: '/admin',         component: () => import('../views/AdminView.vue') },
 ]
 
 const router = createRouter({

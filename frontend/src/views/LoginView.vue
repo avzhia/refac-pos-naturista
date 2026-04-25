@@ -244,7 +244,7 @@ async function guardarYCerrar() {
         <!-- Botón ⚙️ administración -->
         <button
           v-if="step !== 'setup'"
-          @click="abrirAdmin"
+          @click="router.push('/admin')"
           class="absolute top-4 right-4 text-gray-300 hover:text-gray-500 transition-colors text-xl"
           title="Administración"
         >⚙️</button>
@@ -273,7 +273,7 @@ async function guardarYCerrar() {
             <p class="text-3xl mb-3">🏪</p>
             <h2 class="text-base font-semibold text-gray-700 mb-1">No hay tiendas configuradas</h2>
             <p class="text-sm text-gray-400 mb-4">Usa el botón ⚙️ para crear una tienda y un cajero.</p>
-            <button @click="abrirAdmin"
+            <button @click="router.push('/admin')"
               class="px-5 py-2 bg-green-700 text-white rounded-xl text-sm font-medium hover:bg-green-800 transition-colors">
               ⚙️ Abrir configuración
             </button>
